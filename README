@@ -16,3 +16,18 @@ several of them using the Restructured Text markup notation.
 Please read the Documentation/process/changes.rst file, as it contains the
 requirements for building and running the kernel, and information about
 the problems which may result by upgrading your kernel.
+
+
+.........................................
+  NOTHING Phone(1) Release Note
+.........................................
+
+(1)OS 1.0.1
+ -First release opensource of kernel and devicetree
+ -devicetree
+   Both of repository has moved to vendor/qcom/proprietary/devicetree/msm-extra
+   in NOTHING opensource. Please make sure the path of vendor_links is correct
+   when you lunch and building
+
+   (a)vendor/qcom/proprietary/camera-devicetree/
+   (b)vendor/qcom/proprietary/display-devicetree/display

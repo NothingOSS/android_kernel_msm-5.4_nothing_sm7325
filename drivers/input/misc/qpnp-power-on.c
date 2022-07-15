@@ -1050,10 +1050,12 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	if (!cfg->old_state && !key_status) {
 		input_report_key(pon->pon_input, cfg->key_code, 1);
 		input_sync(pon->pon_input);
+		dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, 1);
 	}
 
 	input_report_key(pon->pon_input, cfg->key_code, key_status);
 	input_sync(pon->pon_input);
+	dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, key_status);
 
 	cfg->old_state = !!key_status;
 
@@ -1192,6 +1194,7 @@ static void bark_work_func(struct work_struct *work)
 		/* Report the key event and enable the bark IRQ */
 		input_report_key(pon->pon_input, cfg->key_code, 0);
 		input_sync(pon->pon_input);
+		dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, 0);
 		enable_irq(cfg->bark_irq);
 	} else {
 		/* Disable reset */
@@ -1229,6 +1232,7 @@ static irqreturn_t qpnp_resin_bark_irq(int irq, void *_pon)
 	/* Report the key event */
 	input_report_key(pon->pon_input, cfg->key_code, 1);
 	input_sync(pon->pon_input);
+	dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, 1);
 
 	/* Schedule work to check the bark status for key-release */
 	schedule_delayed_work(&pon->bark_work, QPNP_KEY_STATUS_DELAY);

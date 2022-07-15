@@ -192,3 +192,8 @@
   __tracepoint_rmnet_shs_low
   __tracepoint_rmnet_shs_wq_high
   __tracepoint_rmnet_shs_wq_low
+  device_remove_bin_file
+  snd_pcm_format_physical_width
+  snd_pcm_hw_constraint_mask64
+  devm_snd_soc_register_component
+  devm_gpio_free

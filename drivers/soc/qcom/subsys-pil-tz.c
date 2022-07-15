@@ -43,6 +43,16 @@
 #define ERR_READY	0
 #define PBL_DONE	1
 
+#define SA_DUMP_FLAG
+#ifdef SA_DUMP_FLAG
+static struct kobject *k_obj = NULL;
+int sa_dump_exist = 0;
+int dump_node_exist = 0;
+#define DUMP_KEYWORD_MAX_LEN 10
+char *dump_keyword[DUMP_KEYWORD_MAX_LEN] = {"5G", "SA", "NR5G", "SUB6", "NRCA",
+                                            "5g", "sa", "nr5g", "sub6", "nrca"};
+#endif
+
 #define desc_to_data(d) container_of(d, struct pil_tz_data, desc)
 #define subsys_to_data(d) container_of(d, struct pil_tz_data, subsys_desc)
 
@@ -763,6 +773,9 @@ static void log_failure_reason(const struct pil_tz_data *d)
 	size_t size;
 	char *smem_reason, reason[MAX_SSR_REASON_LEN];
 	const char *name = d->subsys_desc.name;
+#ifdef SA_DUMP_FLAG
+	int i = 0;
+#endif
 
 	if (d->smem_id == -1)
 		return;
@@ -780,6 +793,15 @@ static void log_failure_reason(const struct pil_tz_data *d)
 
 	strlcpy(reason, smem_reason, min(size, (size_t)MAX_SSR_REASON_LEN));
 	pr_err("%s subsystem failure reason: %s.\n", name, reason);
+
+#ifdef SA_DUMP_FLAG
+	for (i = 0; i < DUMP_KEYWORD_MAX_LEN; i++) {
+		if (strstr(reason, dump_keyword[i])) {
+			sa_dump_exist = sa_dump_exist ? 0 : 1;
+			break;
+		}
+	}
+#endif
 }
 
 static int subsys_shutdown(const struct subsys_desc *subsys, bool force_stop)
@@ -1594,10 +1616,49 @@ static const struct of_device_id pil_tz_match_table[] = {
 	{}
 };
 
+
+#ifdef SA_DUMP_FLAG
+static ssize_t store_sa_dump(struct kobject *kobj,struct kobj_attribute *attr,const char *buf, size_t size)
+{
+	int val;
+	sscanf(buf, "%d", &val);
+	if(val)
+		sa_dump_exist = 1;
+	else
+		sa_dump_exist = 0;
+	return size;
+}
+
+static ssize_t show_sa_dump(struct kobject *kobj,struct kobj_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", sa_dump_exist);
+}
+
+static struct kobj_attribute sa_dump_attribute = __ATTR(sa_dump, S_IRUGO | S_IWUSR, show_sa_dump, store_sa_dump);
+
+static struct attribute *sa_dump_attributes[] = {
+	&sa_dump_attribute.attr,
+	NULL,
+};
+
+static const struct attribute_group sa_dump_attr_group = {
+	.attrs = sa_dump_attributes,
+};
+#endif
+
 static int pil_tz_driver_probe(struct platform_device *pdev)
 {
 	const struct of_device_id *match;
 	int (*pil_tz_probe)(struct platform_device *pdev);
+
+#ifdef SA_DUMP_FLAG
+	if (!dump_node_exist) {
+		k_obj = kobject_create_and_add("dump_node", NULL);
+		if (sysfs_create_group(k_obj, &sa_dump_attr_group))
+			pr_err("sa_dump_attr_group error!\n");
+		dump_node_exist = 1;
+	}
+#endif
 
 	match = of_match_node(pil_tz_match_table, pdev->dev.of_node);
 	if (!match)
