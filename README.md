@@ -3,7 +3,7 @@
 - First release opensource of kernel and devicetree
 - devicetree
    Both of repository has moved to vendor/qcom/proprietary/devicetree/msm-extra in NOTHING opensource.
-   Please make sure the path of vendor_links is correct when you lunch and building image
+   Please make sure the path of vendor_links is correct when you launch and build the image
     - vendor/qcom/proprietary/camera-devicetree/
     - vendor/qcom/proprietary/display-devicetree/display
 
