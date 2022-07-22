@@ -37,6 +37,7 @@
 #define SEC_PANEL_NAME_MAX_LEN  256
 
 int rm692e5_aod_flag = 0;
+int current_refresh_rate = 120;
 
 u8 dbgfs_tx_cmd_buf[SZ_4K];
 static char dsi_display_primary[MAX_CMDLINE_PARAM_LEN];
@@ -7377,6 +7378,7 @@ int dsi_display_set_mode(struct dsi_display *display,
 			timing.h_active, timing.v_active, timing.refresh_rate);
 	SDE_EVT32(adj_mode.priv_info->mdp_transfer_time_us,
 			timing.h_active, timing.v_active, timing.refresh_rate);
+	current_refresh_rate = timing.refresh_rate;
 
 	memcpy(display->panel->cur_mode, &adj_mode, sizeof(adj_mode));
 error:

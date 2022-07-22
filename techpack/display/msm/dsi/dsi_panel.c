@@ -541,13 +541,15 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 	return 0;
 }
 
+extern int current_refresh_rate;
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
 	int rc = 0;
-	int hbm_flag = 0, wait_te_low = 0;
+	int i = 0;
 	unsigned long mode_flags = 0;
 	struct mipi_dsi_device *dsi = NULL;
+	u32 timeout_cnt = (current_refresh_rate == 120) ? 4 : 8;
 
 	if (!panel || (bl_lvl > 0xffff)) {
 		DSI_ERR("invalid params\n");
@@ -560,28 +562,18 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 	}
 
-	/*set hbm flag only when panel-ic is rm692e5*/
-	if (!strcmp("rm692e5 amoled fhd+ 120hz cmd mode dsi visionox panel", panel->name)) {
-		if (bl_lvl == BACKLIGHT_HBM_LEVEL) {
-			hbm_flag = 1;
-		}
-	}
-
 	if (panel->bl_config.bl_inverted_dbv)
 		bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
 
-	/*send HBM cmd only when TE pin high-delay 1ms-low when panel-ic is rm692e5*/
+	/*send modify brightness cmd only when TE pin high-"delay 1ms"-low when panel-ic is rm692e5*/
 	/*WAITING_FOR_TE_MAX_TIMES is max times when refresh is 60hz*/
 	if (!strcmp("rm692e5 amoled fhd+ 120hz cmd mode dsi visionox panel", panel->name)) {
-		while (hbm_flag) {
+		for (i = 0; i < timeout_cnt; i++) {
 			if (gpio_get_value(panel->bl_config.te_gpio)) {
 				usleep_range(1000, 1100);
-				if (!gpio_get_value(panel->bl_config.te_gpio))
-					break;
-				wait_te_low++;
-			}
-			if (wait_te_low == WAITING_FOR_TE_MAX_TIMES)
+			} else {
 				break;
+			}
 		}
 	}
 
