@@ -1059,6 +1059,7 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		wcd_mbhc_report_plug(mbhc, 0, jack_type);
 
 		if (mbhc->mbhc_cfg->enable_usbc_analog) {
+			msleep(900);
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
 			if (mbhc->mbhc_cb->clk_setup)
 				mbhc->mbhc_cb->clk_setup(
