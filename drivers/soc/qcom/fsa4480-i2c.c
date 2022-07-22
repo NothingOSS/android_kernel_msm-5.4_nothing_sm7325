@@ -310,6 +310,8 @@ static int fsa4480_usbc_analog_setup_switches_ucsi(
 
 		/* deactivate switches */
 		fsa4480_usbc_update_settings(fsa_priv, 0x18, 0x98);
+		regmap_write(fsa_priv->regmap, FSA4480_FUNCTION_ENABLE, 0x00);
+		dev_dbg(fsa_priv->dev, "%s: set reg[0x12] reset.\n",__func__);
 		break;
 	default:
 		/* ignore other usb connection modes */
