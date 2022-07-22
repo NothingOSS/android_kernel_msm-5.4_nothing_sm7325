@@ -363,7 +363,6 @@ struct aw210xx {
 	struct i2c_client *i2c;
 	struct device *dev;
 	struct led_classdev cdev;
-	struct power_supply *bat_psy;
 	struct workqueue_struct *leds_workqueue;
 	struct workqueue_struct *video_workqueue;
 	struct work_struct brightness_work;
@@ -386,6 +385,7 @@ struct aw210xx {
 	int bootan_effect;
 	int ringtone_effect;
 	int flip_effect;
+	int exclamation_effect;
 	aw210xx_music_state_t music_effect;
 	aw210xx_r_cam_state_t r_cam_effect;
 	uint8_t sdmd_flag;

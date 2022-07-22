@@ -28,7 +28,6 @@
 #include <linux/string.h>
 #include <linux/uaccess.h>
 #include <linux/random.h>
-#include <linux/power_supply.h>
 #include <linux/time.h>
 #include <linux/leds.h>
 #include "leds_aw210xx.h"
@@ -1174,27 +1173,6 @@ static ssize_t aw210xx_setting_br_store(struct device *dev,
 
 	aw210xx->setting_br = (uint16_t)val;
 	AW_INFO("aw210xx->setting_br:%d\n",aw210xx->setting_br);
-	if((aw210xx->wired_charging & 0xFF)== 1){
-		int bat_state = (aw210xx->wired_charging >> 8) & 0xFF;
-		int bat_val = (aw210xx->wired_charging >> 16) & 0xFF;
-		int led[9] ={16,13,11,9,12,10,14,15,8};
-		int num =0;
-
-		if(bat_state ==1){
-				for(num = 0; (num<9)&&(num<bat_val); num++){
-					aw210xx_single_led_br_set(aw210xx, led[num], aw210xx->setting_br);
-				}
-				if(bat_val ==10){
-					aw210xx_round_leds_br_set(aw210xx, aw210xx->setting_br);
-				}
-
-				if((aw210xx->wired_charging & 0xFF) == 0){
-					return len;
-				}
-				aw210xx_update(aw210xx);
-		}
-	}
-
 	return len;
 }
 
@@ -1556,46 +1534,23 @@ static ssize_t aw210xx_wired_charging_store(struct device *dev,
 {
 	struct led_classdev *led_cdev = dev_get_drvdata(dev);
 	struct aw210xx *aw210xx = container_of(led_cdev, struct aw210xx, cdev);
-	int led[9] ={16,13,11,9,12,10,14,15,8};
-	int num =0;
 	int state =0, bat_state =0, bat_val =0;
 
 	mutex_lock(&aw210xx->led_mutex);
 	if (sscanf(buf, "%d %d %d", &state, &bat_state, &bat_val) == 3) {
 		AW_INFO("state:%d, bat_state:%d, bat_val:%d\n", state, bat_state, bat_val);
-		if(aw210xx->wired_charging != ((state & 0xFF) | ((bat_state&0xFF)<<8) |((bat_val&0xFF)<<16))){
+		if(aw210xx->wired_charging != ((state & 0xFF) |((bat_val&0xFF)<<16))){
 			if((state ==1) && ((aw210xx->wired_charging & 0xFF) != state)){
-				aw210xx->wired_charging  = (state & 0xFF) | ((bat_state&0xFF)<<8) |((bat_val&0xFF)<<16);
+				aw210xx->wired_charging  = (state & 0xFF) |((bat_val&0xFF)<<16);
 				queue_work(aw210xx->leds_workqueue, &aw210xx->wired_charging_work);
-			}else if((state ==1) && (aw210xx->wired_charging & 0xFF) == state){
-				aw210xx->wired_charging  = (state & 0xFF) | ((bat_state&0xFF)<<8) |((bat_val&0xFF)<<16);
-				if(bat_state ==1){
-					for(num = 0; (num<9)&&(num<bat_val); num++){
-						aw210xx_single_led_br_set(aw210xx, led[num], aw210xx->setting_br);
-					}
-					if(bat_val ==10){
-						aw210xx_round_leds_br_set(aw210xx, aw210xx->setting_br);
-					}
-					aw210xx_update(aw210xx);
-					if((aw210xx->wired_charging & 0xFF) == 0){
-						aw210xx_all_white_leds_br_set(aw210xx, 0);
-						aw210xx_update(aw210xx);
-						goto end;
-					}
-				}else if(bat_state ==0){
-					aw210xx_all_white_leds_br_set(aw210xx, 0);
-					aw210xx_update(aw210xx);
-				}
 			}else if((state ==0) && ((aw210xx->wired_charging & 0xFF) != state)){
 				aw210xx->wired_charging = 0;
-				general_effect_end = 1;
 				cancel_work_sync(&aw210xx->wired_charging_work);
 				aw210xx_all_white_leds_br_set(aw210xx, 0);
 				aw210xx_update(aw210xx);
 			}
 		}
 	}
-end:
 	mutex_unlock(&aw210xx->led_mutex);
 	return len;
 }
@@ -2017,6 +1972,41 @@ static ssize_t aw210xx_flip_leds_effect_store(struct device *dev,
 	return len;
 }
 
+static ssize_t aw210xx_exclamation_leds_effect_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct aw210xx *aw210xx = container_of(led_cdev, struct aw210xx, cdev);
+	int led[9] ={16,13,11,9,12,10,14,15,8};
+	int led_br[9] = {0};
+	int num =0;
+	int state =0;
+
+	AW_INFO("enter\n");
+
+	mutex_lock(&aw210xx->led_mutex);
+	if (sscanf(buf, "%d %d %d %d %d %d %d %d %d %d",
+		&state, &led_br[0], &led_br[1], &led_br[2], &led_br[3], &led_br[4], &led_br[5], &led_br[6], &led_br[7], &led_br[8]) == 10) {
+		if(state == 1){
+			for(num = 0; num < 9; num++){
+				aw210xx_single_led_br_set(aw210xx, led[num], led_br[num]*aw210xx->setting_br /4095);
+			}
+			aw210xx_update(aw210xx);
+			aw210xx->exclamation_effect = 1;
+
+		}else if((state == 0) && (aw210xx->exclamation_effect != 0)){
+			for(num = 0; num < 9; num++){
+				aw210xx_single_led_br_set(aw210xx, led[num], 0);
+			}
+			aw210xx_update(aw210xx);
+			aw210xx->exclamation_effect = 0;
+		}
+	}
+	mutex_unlock(&aw210xx->led_mutex);
+	return len;
+}
+
 static ssize_t aw210xx_opdetect_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -2080,6 +2070,7 @@ static DEVICE_ATTR(rear_cam_leds_effect, 0220, NULL, aw210xx_rear_cam_leds_effec
 static DEVICE_ATTR(ringtone_delay, 0664, aw210xx_ringtone_delay_show, aw210xx_ringtone_delay_store);
 static DEVICE_ATTR(ringtone_leds_effect, 0220, NULL, aw210xx_ringtone_leds_effect_store);
 static DEVICE_ATTR(flip_leds_effect, 0220, NULL, aw210xx_flip_leds_effect_store);
+static DEVICE_ATTR(exclamation_leds_effect, 0220, NULL, aw210xx_exclamation_leds_effect_store);
 static DEVICE_ATTR(opdetect, 0664, aw210xx_opdetect_show, NULL);
 static DEVICE_ATTR(stdetect, 0664, aw210xx_stdetect_show, NULL);
 
@@ -2114,6 +2105,7 @@ static struct attribute *aw210xx_attributes[] = {
 	&dev_attr_ringtone_delay.attr,
 	&dev_attr_ringtone_leds_effect.attr,
 	&dev_attr_flip_leds_effect.attr,
+	&dev_attr_exclamation_leds_effect.attr,
 	&dev_attr_opdetect.attr,
 	&dev_attr_stdetect.attr,
 	NULL,
@@ -2320,54 +2312,49 @@ static void aw210xx_wired_charging_work(struct work_struct *work)
 			wired_charging_work);
 	int led[9] ={16,13,11,9,12,10,14,15,8};
 	int num =0;
-	int bat_state = (aw210xx->wired_charging >> 8) & 0xFF;
 	int bat_val = (aw210xx->wired_charging >> 16) & 0xFF;
-	AW_INFO("enter \n");
 
+	AW_INFO("enter \n");
+	pm_stay_awake(aw210xx->dev);
 	for(num = 0; num<9; num++){
 		aw210xx_single_led_br_set(aw210xx, led[num], aw210xx->setting_br);
 		aw210xx_update(aw210xx);
-		usleep_range(20000, 20000);
+		usleep_range(15000, 15000);
 		if((aw210xx->wired_charging & 0xFF) == 0){
-			aw210xx_horse_race_leds_br_set(aw210xx, 0, 0);
-			aw210xx_round_leds_br_set(aw210xx, 0);
-			aw210xx_update(aw210xx);
-			return;
+			goto end;
 		}
 	}
-
-	aw210xx_round_leds_on(aw210xx, 1);
-	usleep_range(350000, 350000);
-
-	//aw210xx_horse_race_leds_br_set(aw210xx, 0, 0);
-	//aw210xx_round_leds_br_set(aw210xx, 0);
-	//aw210xx_update(aw210xx);
-	//usleep_range(250000, 250000);
-
-	general_effect_end = 0;
-	aw210xx_update_general_leds_effect(aw210xx, 0);
 
 	if((aw210xx->wired_charging & 0xFF) == 0){
-		aw210xx_all_white_leds_br_set(aw210xx, 0);
-		aw210xx_update(aw210xx);
-		return;
+		goto end;
 	}
 
-	if(bat_state ==1){
-		for(num = 0; (num<9)&&(num<bat_val); num++){
-			aw210xx_single_led_br_set(aw210xx, led[num], aw210xx->setting_br);
-		}
-		if(bat_val ==10){
-			aw210xx_round_leds_br_set(aw210xx, aw210xx->setting_br);
-		}
+	for(num = 8 ; (num >= bat_val); num--){
+		aw210xx_single_led_br_set(aw210xx, led[num], 0);
 		aw210xx_update(aw210xx);
-
-		if((aw210xx->wired_charging & 0xFF) == 0){
-			aw210xx_all_white_leds_br_set(aw210xx, 0);
-			aw210xx_update(aw210xx);
-			return;
-		}
+		usleep_range(5000, 5000);
 	}
+	if((aw210xx->wired_charging & 0xFF) == 0){
+		goto end;
+	}
+
+	usleep_range(2000000, 2000000);
+
+	if((aw210xx->wired_charging & 0xFF) == 0){
+		goto end;
+	}
+
+	for((num = bat_val -1); num >= 0; num--){
+		aw210xx_single_led_br_set(aw210xx, led[num], 0);
+		aw210xx_update(aw210xx);
+		usleep_range(11000, 11000);
+	}
+
+end:
+	aw210xx_all_white_leds_br_set(aw210xx, 0);
+	aw210xx_update(aw210xx);
+	pm_relax(aw210xx->dev);
+	AW_INFO("end \n");
 }
 
 static void aw210xx_wlr_charging_work(struct work_struct *work)
@@ -2377,20 +2364,12 @@ static void aw210xx_wlr_charging_work(struct work_struct *work)
 
 	AW_INFO("enter \n");
 
-#if 0
-	aw210xx_leds_breath_data.repeat_nums =1;
-	if(aw210xx->wlr_charging ==1){
-		aw210xx_round_leds_breath(aw210xx);
-		aw210xx->wlr_charging = 0;
-		aw210xx_round_leds_on(aw210xx, 0);
-	}
-#endif
-
+	pm_stay_awake(aw210xx->dev);
 	general_effect_end = 0;
 	aw210xx_update_general_leds_effect(aw210xx, 1);
-	aw210xx->wlr_charging = 0;
 	aw210xx_all_white_leds_br_set(aw210xx, 0);
 	aw210xx_update(aw210xx);
+	pm_relax(aw210xx->dev);
 
 }
 
@@ -2484,6 +2463,7 @@ static void aw210xx_nf_effect_work(struct work_struct *work)
 
 	AW_INFO("enter \n");
 
+	pm_stay_awake(aw210xx->dev);
 	if((aw210xx->nf_effect -1) < (sizeof(aw210xx_notification_leds_effect)/sizeof(aw210xx_effect_cfg_t))){
 		if(aw210xx->nf_effect != 0){
 			aw210xx_update_notification_leds_effect(aw210xx, aw210xx->nf_effect -1);
@@ -2509,6 +2489,7 @@ static void aw210xx_nf_effect_work(struct work_struct *work)
 			aw210xx->nf_effect = 0;
 		}
 	}
+	pm_relax(aw210xx->dev);
 }
 
 static void aw210xx_bootan_effect_work(struct work_struct *work)
@@ -2575,6 +2556,7 @@ static void aw210xx_ringtone_effect_work(struct work_struct *work)
 	int i = 0;
 	AW_INFO("enter \n");
 
+	pm_stay_awake(aw210xx->dev);
 	if((aw210xx->ringtone_effect -1) < (sizeof(aw210xx_ringtone_leds_effect)/sizeof(aw210xx_effect_cfg_t))){
 		while(aw210xx->ringtone_effect != 0){
 			aw210xx_update_ringtone_leds_effect(aw210xx, aw210xx->ringtone_effect -1);
@@ -2596,6 +2578,7 @@ static void aw210xx_ringtone_effect_work(struct work_struct *work)
 	}
 	aw210xx_all_white_leds_br_set(aw210xx, 0);
 	aw210xx_update(aw210xx);
+	pm_relax(aw210xx->dev);
 
 	AW_INFO("end \n");
 }
@@ -2614,11 +2597,12 @@ static void aw210xx_flip_effect_work(struct work_struct *work)
 		aw210xx_update(aw210xx);
 	}
 #endif
+	pm_stay_awake(aw210xx->dev);
 	general_effect_end = 0;
 	aw210xx_update_general_leds_effect(aw210xx, 2);
-	aw210xx->flip_effect = 0;
 	aw210xx_all_white_leds_br_set(aw210xx, 0);
 	aw210xx_update(aw210xx);
+	pm_relax(aw210xx->dev);
 }
 
 static ssize_t aw210xx_nf_read(struct file *file, char __user *user, size_t size,loff_t *ppos)
@@ -2754,6 +2738,8 @@ static int aw210xx_i2c_probe(struct i2c_client *i2c,
 	if (ret) {
 		AW_ERR("%s: misc_register failed\n", __func__);
 	}
+
+	device_init_wakeup(aw210xx->dev, true);
 
 	AW_INFO("probe completed!\n");
 
