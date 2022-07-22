@@ -7,3 +7,6 @@
     - vendor/qcom/proprietary/camera-devicetree/
     - vendor/qcom/proprietary/display-devicetree/display
 
+2. OS 1.0.2
+- Improve audio, led and display driver
+- Bugs fix
