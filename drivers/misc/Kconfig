@@ -540,6 +540,11 @@ config NT_SECURE_STATE
         help
           NT Secure State Driver.
 
+config NT_SLOT_STATE
+        bool "NT SLOT State Driver"
+        help
+          NT SLOT State Driver.
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
