@@ -288,7 +288,7 @@
  * define your own fw_file, the sample one to be replaced is invalid
  * NOTE: if FTS_GET_MODULE_NUM > 1, it's the fw corresponding with FTS_VENDOR_ID
  */
-#define FTS_UPGRADE_FW_FILE                     "include/firmware/FT3680_WXN_M146_V25_D01_20220516_app.i"
+#define FTS_UPGRADE_FW_FILE                     "include/firmware/FT3680_WXN_M146_V27_D01_20220706_app.i"
 
 /*
  * if FTS_GET_MODULE_NUM >= 2, fw corrsponding with FTS_VENDOR_ID2
