@@ -1918,9 +1918,9 @@ static ssize_t slowcharge_en_store(struct class *c, struct class_attribute *attr
 	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
 						battery_class);
 	int rc;
-	bool val;
+	u32 val;
 
-	if (kstrtobool(buf, &val))
+	if (kstrtou32(buf, 16, &val))
 		return -EINVAL;
 
 	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB],
