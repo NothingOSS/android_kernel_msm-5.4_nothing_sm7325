@@ -32,6 +32,8 @@
 #include <linux/miscdevice.h>
 #include <linux/mman.h>
 #define RICHTAP_NAME "aw8697_haptic"
+#undef dev_dbg
+#define dev_dbg dev_err
 #endif //RICHTAP_FOR_PMIC_ENABLE
 
 
@@ -4892,7 +4894,7 @@ static int richtap_set_fifo(struct haptics_chip *chip, struct fifo_cfg *fifo)
 		return rc;
 	}
 
-	dev_dbg(chip->dev, "aac Richtap set busy to 1\n");
+	//dev_dbg(chip->dev, "aac Richtap set busy to 1\n");
 	atomic_set(&status->is_busy, 1);
 	status->samples_written = num;
 
@@ -4977,7 +4979,7 @@ static int richtap_load_prebake(struct haptics_chip *chip, u8 *data, u32 length)
 	custom_data.play_rate_hz = 24000; //24000;
 	custom_data.data = data;
 
-	dev_dbg(chip->dev, "aac RichTap data %d length\n", length);
+	//dev_dbg(chip->dev, "aac RichTap data %d length\n", length);
 
 	rc = haptics_convert_sample_period(chip, custom_data.play_rate_hz);
 	if (rc < 0) {
@@ -5079,7 +5081,7 @@ static void richtap_work_proc(struct work_struct *work)
      count = 0;
      while (first->length < get_max_fifo_samples(chip)) {
 		if ((chip->current_buf->status == MMAP_BUF_DATA_FINISHED) ||
-				(count > 30))
+				(count >= 30))
 			break;
 		if ((chip->current_buf->status != MMAP_BUF_DATA_VALID) &&
 				(count < 30)) {
@@ -5192,9 +5194,10 @@ static long richtap_file_unlocked_ioctl(struct file *file, unsigned int cmd, uns
 
 		mutex_lock(&chip->play.lock);
 		haptics_stop_fifo_play(chip);
+		atomic_set(&chip->play.fifo_status.written_done, 1);
+		atomic_set(&chip->richtap_mode, false);
 		mutex_unlock(&chip->play.lock);
 		richtap_rc_clk_disable(chip);
-		atomic_set(&chip->richtap_mode, false);
 
 		ret = richtap_load_prebake(chip, &chip->rtp_ptr[4], tmp);
 		if (ret < 0) {
@@ -5242,6 +5245,7 @@ static long richtap_file_unlocked_ioctl(struct file *file, unsigned int cmd, uns
 		break;
 	case RICHTAP_STREAM_MODE:
 		richtap_clean_buf(chip, MMAP_BUF_DATA_INVALID);
+		cancel_work_sync(&chip->richtap_stream_work);
 		mutex_lock(&chip->play.lock);
 		haptics_stop_fifo_play(chip);
 		mutex_unlock(&chip->play.lock);
@@ -5250,6 +5254,7 @@ static long richtap_file_unlocked_ioctl(struct file *file, unsigned int cmd, uns
 		schedule_work(&chip->richtap_stream_work);
 		break;
 	case RICHTAP_STOP_MODE:
+		cancel_work_sync(&chip->richtap_stream_work);
 		mutex_lock(&chip->play.lock);
 		richtap_clean_buf(chip, MMAP_BUF_DATA_FINISHED);
 		atomic_set(&chip->play.fifo_status.written_done, 1);
