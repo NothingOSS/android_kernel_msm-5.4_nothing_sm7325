@@ -354,6 +354,7 @@ static void fts_gesture_report(struct fts_ts_data *ts_data,struct input_dev *inp
         if( (ts_data->fod_info.fp_down) &&(!ts_data->fod_info.fp_down_report)) {
             ts_data->fod_info.fp_down_report = 1;
             FTS_DEBUG("Gesture Code down=%d", gesture);
+            ts_data->fod_gesture_id = gesture;
             input_report_key(input_dev, gesture, 1);
             input_sync(input_dev);
         } else if ((!ts_data->fod_info.fp_down)&&(ts_data->fod_info.fp_down_report)) {
@@ -361,10 +362,6 @@ static void fts_gesture_report(struct fts_ts_data *ts_data,struct input_dev *inp
             FTS_DEBUG("Gesture Code up=%d", gesture);
             input_report_key(input_dev, gesture, 0);
             input_sync(input_dev);
-            FTS_INFO("up flag = %d,blank flag = %d", ts_data->fod_info.fp_down_report, ts_data->blank_lp);
-            if((!ts_data->fod_info.fp_down_report) && (ts_data->blank_up)){
-                queue_work(fts_data->ts_workqueue, &fts_data->resume_work);
-            }
         }
     } else if ((gesture != -1) && (point == 1)) {
         FTS_DEBUG("Gesture Code=%d", gesture);

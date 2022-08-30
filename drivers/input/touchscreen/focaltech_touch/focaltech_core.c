@@ -1647,8 +1647,8 @@ static int drm_notifier_callback(struct notifier_block *self,
         if (DRM_PANEL_EARLY_EVENT_BLANK == event) {
             FTS_INFO("resume: event = %lu, not care\n", event);
         } else if (DRM_PANEL_EVENT_BLANK == event) {
-            queue_work(fts_data->ts_workqueue, &fts_data->resume_work);
             ts_data->blank_up = 1;
+            queue_work(fts_data->ts_workqueue, &fts_data->resume_work);
         }
         break;
     case DRM_PANEL_BLANK_POWERDOWN:
@@ -1665,7 +1665,6 @@ static int drm_notifier_callback(struct notifier_block *self,
             fts_ts_suspend(ts_data->dev);
         } else if (DRM_PANEL_EVENT_BLANK == event) {
             FTS_INFO("suspend: event = %lu, not care\n", event);
-            ts_data->blank_lp = 1;
         }
         break;
     default:
@@ -2059,9 +2058,15 @@ static int fts_ts_suspend(struct device *dev)
 static int fts_ts_resume(struct device *dev)
 {
     struct fts_ts_data *ts_data = fts_data;
+    struct input_dev *input_dev = ts_data->input_dev;
 
-    FTS_INFO("down flag = %d,blank flag = %d", ts_data->fod_info.fp_down_report, ts_data->blank_lp);
-    if((!ts_data->fod_info.fp_down_report) || (!ts_data->blank_lp)){
+    FTS_INFO("down flag = %d,blank flag = %d", ts_data->fod_info.fp_down_report, ts_data->blank_up);
+    if((ts_data->fod_info.fp_down_report) && (ts_data->blank_up)){
+        ts_data->fod_info.fp_down_report = 0;
+        FTS_DEBUG("Gesture Code up supplement=%d", ts_data->fod_gesture_id);
+        input_report_key(input_dev, ts_data->fod_gesture_id, 0);
+        input_sync(input_dev);
+    }
     FTS_FUNC_ENTER();
     if (!ts_data->suspended) {
         FTS_DEBUG("Already in awake state");
@@ -2088,9 +2093,7 @@ static int fts_ts_resume(struct device *dev)
     }
 
     FTS_FUNC_EXIT();
-    ts_data->blank_lp = 0;
     ts_data->blank_up = 0;
-    }
     return 0;
 }
 

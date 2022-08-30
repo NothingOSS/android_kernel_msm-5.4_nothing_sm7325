@@ -221,7 +221,7 @@ struct fts_ts_data {
     u8 edge_mode;
     bool gesture_support;   /* gesture enable or disable, default: disable */
     u8 gesture_bmode;       /*gesture buffer mode*/
-    u8 blank_lp;
+    u8 fod_gesture_id;
     u8 blank_up;
 
     u8 pen_etype;
