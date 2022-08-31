@@ -14,3 +14,10 @@
 3. OS 1.1.0
 - Improve touch panel, led driver
 - Bugs fix
+
+4. OS 1.1.2
+- No update
+
+5. OS 1.1.3
+- Improve touch panel and display driver
+- Bugs fix
