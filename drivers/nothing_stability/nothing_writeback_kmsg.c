@@ -88,23 +88,24 @@ pr_err("[NT_reserve_kernel_log] "fmt, ##arg)
 
 #define NT_MAGIC_SIZE 16 // need follow 2^n
 
-const char* LOG_THREAD_MAGIC = "NOTING_RKL_V0";
+const char* NT_LOG_MAGIC = "NOTING_RKL_V0";
 const char* TARGET_PARTITION_LABEL = "PARTLABEL=logdump";
 const struct file_operations f_op = {.fsync = blkdev_fsync};
 
 /* If someone needs to modify the NT_reserve_kernel_log_header struct.
- * you also need to change the LOG_THREAD_MAGIC!
+ * you also need to change the NT_LOG_MAGIC!
  * ex. NOTING_IS_RKL_V0 -> NOTING_IS_RKL_V1
  * This means that the header needs to be "re-initialized"
  */
 typedef struct
 {
-	char magic[NT_MAGIC_SIZE]; //NOTING_IS_RKL_V0
+	char magic[NT_MAGIC_SIZE];
 	unsigned char boot_count;
 	unsigned char panic_count;
 	unsigned char last_reboot_is_panic;
 	unsigned char last_boot_is_fail;
-} NT_reserve_kernel_log_header;
+	unsigned char bootloader_count;
+} NT_reserve_kernel_log_header; //need align Bootloaderlogging dxe.
 
 typedef enum {
 	NT_COMPARE_HEADER_MAGIC,
@@ -219,16 +220,18 @@ int action_reserve_kernel_log_header(struct file *target_partition_file, int act
 
 	switch(action) {
 		case NT_COMPARE_HEADER_MAGIC:
-			return memcmp(rkl_header.magic, LOG_THREAD_MAGIC, strlen(LOG_THREAD_MAGIC));
+			return memcmp(rkl_header.magic, NT_LOG_MAGIC, strlen(NT_LOG_MAGIC));
 		break;
 		case NT_RESET_HEADER:
 			memset(&rkl_header, 0, sizeof(NT_reserve_kernel_log_header));
-			memcpy(rkl_header.magic, LOG_THREAD_MAGIC, strlen(LOG_THREAD_MAGIC));
-			NT_rkl_err_print("Reset header, boot_count is %d\n", rkl_header.boot_count);
+			memcpy(rkl_header.magic, NT_LOG_MAGIC, strlen(NT_LOG_MAGIC));
+			NT_rkl_err_print("Reset header, boot_count is %d bootloader_count is %d\n"
+				, rkl_header.boot_count, rkl_header.bootloader_count);
 		break;
 		case NT_ADD_BOOT_COUNT:
 			++rkl_header.boot_count;
-			NT_rkl_err_print("boot_count is %d\n", rkl_header.boot_count);
+			NT_rkl_err_print("boot_count is %d bootloader_count is %d\n"
+				, rkl_header.boot_count, rkl_header.bootloader_count);
 		break;
 		case NT_ADD_PANIC_COUNT:
 			++rkl_header.panic_count;
