@@ -140,6 +140,8 @@ enum wireless_property_id {
 	WLS_ST38_REG,
 	WLS_ST38_DATA,
 	WLS_REVERSE_STATUS,
+	WLS_REVERSE_FOD,
+	WLS_ST38_EN,
 #endif
 	WLS_PROP_MAX,
 };
@@ -2092,7 +2094,57 @@ static ssize_t wls_reverse_status_show(struct class *c, struct class_attribute *
 }
 static CLASS_ATTR_RO(wls_reverse_status);
 
+static ssize_t wls_reverse_fod_show(struct class *c, struct class_attribute *attr,
+				char *buf)
+{
+	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
+						battery_class);
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_WLS];
+	int rc;
 
+	rc = read_property_id(bcdev, pst, WLS_REVERSE_FOD);
+	if (rc < 0)
+		return rc;
+
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n", pst->prop[WLS_REVERSE_FOD]);
+}
+static CLASS_ATTR_RO(wls_reverse_fod);
+
+static ssize_t wls_st38_en_show(struct class *c, struct class_attribute *attr,
+				char *buf)
+{
+	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
+						battery_class);
+	struct psy_state *pst = &bcdev->psy_list[PSY_TYPE_WLS];
+	int rc;
+
+	rc = read_property_id(bcdev, pst, WLS_ST38_EN);
+	if (rc < 0)
+		return rc;
+
+	return scnprintf(buf, PAGE_SIZE, "0x%x\n",  pst->prop[WLS_ST38_EN]);
+}
+
+static ssize_t wls_st38_en_store(struct class *c,
+					struct class_attribute *attr,
+					const char *buf, size_t count)
+{
+	struct battery_chg_dev *bcdev = container_of(c, struct battery_chg_dev,
+						battery_class);
+	int rc;
+	u32 val;
+
+	if (kstrtou32(buf, 0, &val))
+		return -EINVAL;
+
+	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_WLS],
+				WLS_ST38_EN, val);
+	if (rc < 0)
+		return rc;
+
+	return count;
+}
+static CLASS_ATTR_RW(wls_st38_en);
 #endif
 
 static struct attribute *battery_class_attrs[] = {
@@ -2122,6 +2174,8 @@ static struct attribute *battery_class_attrs[] = {
 	&class_attr_wls_st38_reg.attr,
 	&class_attr_wls_st38_data.attr,
 	&class_attr_wls_reverse_status.attr,
+	&class_attr_wls_reverse_fod.attr,
+	&class_attr_wls_st38_en.attr,
 #endif
 	NULL,
 };
