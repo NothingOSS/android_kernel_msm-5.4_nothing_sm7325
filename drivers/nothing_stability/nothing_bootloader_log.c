@@ -13,13 +13,13 @@
 #define BOOTLOADER_LOGGER_COMPATIBLE_NAME "nothing,bootloader_log"
 #define PROC_NAME "bootloader_log"
 
-char *log_buf;
-unsigned long log_buf_len;
+char *bootloader_log_buf;
+unsigned long bootloader_log_buf_len;
 
 static int bootloader_logger_proc_show(struct seq_file *m, void *v)
 {
-	log_buf[log_buf_len-1] = '\0';
-	seq_printf(m, "%s\n", log_buf);
+	bootloader_log_buf[bootloader_log_buf_len-1] = '\0';
+	seq_printf(m, "%s\n", bootloader_log_buf);
 	return 0;
 }
 
@@ -81,13 +81,13 @@ static int bootloader_logger_probe(struct platform_device *pdev)
 		}
 
 		virt_addr = ioremap(phys_addr, mem_size);
-		log_buf = kzalloc(mem_size, GFP_KERNEL);
-		if(!log_buf) {
-			pr_err("[%s]: failed to alloc log_buf\n");
+		bootloader_log_buf = kzalloc(mem_size, GFP_KERNEL);
+		if(!bootloader_log_buf) {
+			pr_err("[%s]: failed to alloc bootloader_log_buf\n");
 			return -ENOMEM;
 		}
-		log_buf_len = mem_size;
-		memcpy(log_buf, virt_addr, mem_size);
+		bootloader_log_buf_len = mem_size;
+		memcpy(bootloader_log_buf, virt_addr, mem_size);
 
 		bootloader_logger_proc_init();
 	}
@@ -100,7 +100,7 @@ err:
 static int bootloader_logger_remove(struct platform_device *pdev)
 {
 	remove_proc_entry(PROC_NAME, NULL);
-	kfree(log_buf);
+	kfree(bootloader_log_buf);
 	return 0;
 }
 
