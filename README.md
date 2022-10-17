@@ -21,3 +21,7 @@
 5. OS 1.1.3
 - Improve touch panel and display driver
 - Bugs fix
+
+6. OS 1.1.4
+- Improve charger and vibration driver
+- Bugs fix
