@@ -105,6 +105,7 @@ typedef struct
 	unsigned char last_reboot_is_panic;
 	unsigned char last_boot_is_fail;
 	unsigned char bootloader_count;
+	unsigned char vbmeta_flag;
 } NT_reserve_kernel_log_header; //need align Bootloaderlogging dxe.
 
 typedef enum {
