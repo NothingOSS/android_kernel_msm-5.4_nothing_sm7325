@@ -501,6 +501,8 @@ static int qpnp_pon_set_dbc(struct qpnp_pon *pon, u32 delay)
 	if (!rc)
 		pon->dbc_time_us = delay;
 
+	pr_info("val:0x%x,dbc_time_us:%u,dealy:%u\n",val,pon->dbc_time_us,delay);
+
 	if (pon->pon_input)
 		mutex_unlock(&pon->pon_input->mutex);
 
@@ -528,6 +530,8 @@ static int qpnp_pon_get_dbc(struct qpnp_pon *pon, u32 *delay)
 	else
 		*delay = USEC_PER_SEC /
 			(1 << (QPNP_PON_DELAY_BIT_SHIFT - val));
+
+	pr_info("1val:0x%x,delay:%u\n",val,delay);
 
 	return rc;
 }
@@ -1052,8 +1056,14 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	if (pon->kpdpwr_dbc_enable && cfg->pon_type == PON_KPDPWR) {
 		elapsed_us = ktime_us_delta(ktime_get(),
 				pon->kpdpwr_last_release_time);
+
+		pr_info("PMIC input: elapsed_us %llu us, debounce time=%u us", elapsed_us, pon->dbc_time_us);
+
 		if (elapsed_us < pon->dbc_time_us) {
 			pr_debug("Ignoring kpdpwr event; within debounce time\n");
+
+			pr_info("Ignoring kpdpwr event; within debounce time\n");
+
 			return 0;
 		}
 	}
@@ -1086,6 +1096,9 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 
 	pr_debug("PMIC input: code=%d, status=0x%02X\n", cfg->key_code,
 		pon_rt_sts);
+
+	pr_err("PMIC input: code=%d, status=0x%02X\n", cfg->key_code,pon_rt_sts);
+
 	key_status = pon_rt_sts & pon_rt_bit;
 
 	if (pon->kpdpwr_dbc_enable && cfg->pon_type == PON_KPDPWR) {
@@ -1104,8 +1117,13 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	if (!cfg->old_state && !key_status) {
 		input_report_key(pon->pon_input, cfg->key_code, 1);
 		input_sync(pon->pon_input);
+
+		pr_info("PMIC input: Simulate a press event");
+
 		dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, 1);
 	}
+
+	pr_info("PMIC input: old_state 0x%02x, kpdpwr_last_release_time %llu us", cfg->old_state, pon->kpdpwr_last_release_time);
 
 	input_report_key(pon->pon_input, cfg->key_code, key_status);
 	input_sync(pon->pon_input);
