@@ -24,3 +24,9 @@ config NOTHING_RESTART_HANDLER
 	default n
 	help
 	  store restart info into imem.
+
+config NOTHING_TASK_MEMINFO
+	tristate "Nothing show all task memory info driver"
+	default n
+	help
+		cat /proc/nt_meminfo/show_all_tasks will show all task meminfo
