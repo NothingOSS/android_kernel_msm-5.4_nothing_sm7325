@@ -19,6 +19,7 @@
 #include <linux/falloc.h>
 #include <linux/uio.h>
 #include <linux/fs.h>
+#include "../f2fs/nt_f2fs.h"
 
 static struct page **fuse_pages_alloc(unsigned int npages, gfp_t flags,
 				      struct fuse_page_desc **desc)
@@ -1301,6 +1302,9 @@ static ssize_t fuse_cache_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	loff_t endbyte = 0;
 
 	if (get_fuse_conn(inode)->writeback_cache) {
+		if(NT_is_data_full()) {
+			return -ENOSPC;
+		}
 		/* Update size (EOF optimization) and mode (SUID clearing) */
 		err = fuse_update_attributes(mapping->host, file);
 		if (err)

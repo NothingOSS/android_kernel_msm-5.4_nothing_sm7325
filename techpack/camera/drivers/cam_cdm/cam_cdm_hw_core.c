@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -1264,30 +1263,26 @@ static void cam_hw_cdm_work(struct work_struct *work)
 			list_for_each_entry_safe(node, tnode,
 				&core->bl_fifo[fifo_idx].bl_request_list,
 				entry) {
-				if ((node->bl_tag <= payload->irq_data) ||
-					((node->bl_tag - payload->irq_data) >
-					CAM_CDM_BL_FIFO_BOUNDARY_CHECK)) {
-					if (node->request_type ==
-						CAM_HW_CDM_BL_CB_CLIENT) {
-						cam_cdm_notify_clients(cdm_hw,
-						CAM_CDM_CB_STATUS_BL_SUCCESS,
-						(void *)node);
-					} else if (node->request_type ==
-						CAM_HW_CDM_BL_CB_INTERNAL) {
-						CAM_ERR(CAM_CDM,
-							"Invalid node=%pK %d",
-							node,
-							node->request_type);
-					}
-					list_del_init(&node->entry);
-					if (node->bl_tag == payload->irq_data) {
-						kfree(node);
-						node = NULL;
-						break;
-					}
+				if (node->request_type ==
+					CAM_HW_CDM_BL_CB_CLIENT) {
+					cam_cdm_notify_clients(cdm_hw,
+					CAM_CDM_CB_STATUS_BL_SUCCESS,
+					(void *)node);
+				} else if (node->request_type ==
+					CAM_HW_CDM_BL_CB_INTERNAL) {
+					CAM_ERR(CAM_CDM,
+						"Invalid node=%pK %d",
+						node,
+						node->request_type);
+				}
+				list_del_init(&node->entry);
+				if (node->bl_tag == payload->irq_data) {
 					kfree(node);
 					node = NULL;
+					break;
 				}
+				kfree(node);
+				node = NULL;
 			}
 		} else {
 			CAM_INFO(CAM_CDM,

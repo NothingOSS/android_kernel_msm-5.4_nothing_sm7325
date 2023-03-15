@@ -1,0 +1,26 @@
+config NOTHING_BOOTLOADER_LOG
+	tristate n
+	default n
+	help
+		show booloader_log under proc/bootloader_log
+
+config NOTHING_WRITRBACK_KMSG
+	tristate n
+	default n
+	help
+		The driver logs power-on to system_stage kmsg log.
+		So it doesn't log any customer info.
+		When the device is stuck. It can help us debug.
+		Check the /sys/devices/virtual/NT/NT_reserve_kernel_log/boot_stage_systemserver is exist.
+
+config NOTHING_STABILITY_TEST
+	tristate "Nothing stability function tester"
+	default n
+	help
+	  This driver can trigger some kernel issue cases(such as hang thread).
+
+config NOTHING_RESTART_HANDLER
+	tristate "Nothing power-off function enhance"
+	default n
+	help
+	  store restart info into imem.

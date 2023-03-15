@@ -730,6 +730,17 @@ out:
 	return ret;
 }
 
+void icnss_mac2bd(u8 *localAddr)
+{
+	int i;
+	u8 temp;
+	for (i = 0; i < 3; i++) {
+		temp = localAddr[i];
+		localAddr[i] = localAddr[5-i];
+		localAddr[5-i] = temp;
+	}
+}
+
 int icnss_qmi_get_dms_mac(struct icnss_priv *priv)
 {
 	struct dms_get_mac_address_req_msg_v01 req;
@@ -788,6 +799,7 @@ int icnss_qmi_get_dms_mac(struct icnss_priv *priv)
 	}
 	priv->dms.mac_valid = true;
 	memcpy(priv->dms.mac, resp.mac_address, QMI_WLFW_MAC_ADDR_SIZE_V01);
+	icnss_mac2bd(priv->dms.mac);
 	icnss_pr_info("Received DMS MAC: [%pM]\n", priv->dms.mac);
 out:
 	return ret;

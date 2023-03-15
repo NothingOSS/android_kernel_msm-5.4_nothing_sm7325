@@ -63,6 +63,9 @@ case "$REQUIRED_DEFCONFIG" in
 		FINAL_DEFCONFIG_BLEND+=" $QCOM_CONSOLIDATE_FRAG"
 		;&	# Intentional fallthrough
 	${PLATFORM_NAME}-qgki_defconfig )
+		# For AGING build
+		FINAL_DEFCONFIG_BLEND+=" $NT_AGING_FRAG"
+
 		# DEBUG_FS fragment.
 		FINAL_DEFCONFIG_BLEND+=" $QCOM_DEBUG_FS_FRAG"
 

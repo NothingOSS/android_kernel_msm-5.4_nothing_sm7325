@@ -246,6 +246,7 @@ struct qpnp_pon {
 	ktime_t			kpdpwr_last_release_time;
 	bool			legacy_hard_reset_offset;
 	bool			log_kpd_event;
+	u32				force_key_warm_reset;
 };
 
 static struct qpnp_pon *sys_reset_dev;
@@ -531,11 +532,64 @@ static int qpnp_pon_get_dbc(struct qpnp_pon *pon, u32 *delay)
 	return rc;
 }
 
+static ssize_t force_key_warm_reset_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct qpnp_pon *pon = dev_get_drvdata(dev);
+	return scnprintf(buf, QPNP_PON_BUFFER_SIZE, "%d\n", pon->force_key_warm_reset);
+}
+
+static ssize_t force_key_warm_reset_store(struct device *dev,
+				struct device_attribute *attr,
+				const char *buf, size_t size)
+{
+	struct qpnp_pon *pon = dev_get_drvdata(dev);
+	u32 value;
+	int rc;
+
+	if (size > QPNP_PON_BUFFER_SIZE)
+		return -EINVAL;
+
+	rc = kstrtou32(buf, 10, &value);
+	if (rc)
+		return rc;
+	pon->force_key_warm_reset = value;
+
+	if (pon->force_key_warm_reset == 1) {
+		rc = regmap_write(pon->regmap, 0x1316, 0x42);
+		//PON_HLOS_INT_EN_CLR
+		rc += regmap_write(pon->regmap, 0x811, 0x14);
+		//set PON_PBS_INT_POLARITY_HIGH to RESIN_AND_KPDPWR_S2 and ps-hold
+		rc += regmap_write(pon->regmap, 0x813, 0x14);
+		//set PON_PBS_INT_POLARITY_LOW to RESIN_AND_KPDPWR_S2 and ps-hold
+		rc += regmap_write(pon->regmap, 0x815, 0x4);
+		//set PON_PBS_INT_EN_SET to RESIN_AND_KPDPWR_S2
+		rc += regmap_write(pon->regmap, 0x844, 0xc);
+		//set PON_PBS_RESIN_N_RESET_S1_TIMER
+		rc += regmap_write(pon->regmap, 0x845, 0x7);
+		//set PON_PBS_RESIN_N_RESET_S2_TIMER
+		rc += regmap_write(pon->regmap, 0x846, 0x1);
+		//set reset type to warm reset
+		rc += regmap_write(pon->regmap, 0x847, 0x80);
+		//enable stage 2 reset
+
+		if (rc)
+			dev_err(pon->dev, "%s enable registers error\n", __func__);
+	} else if (pon->force_key_warm_reset == 0){
+		rc = regmap_write(pon->regmap, 0x847, 0x00);
+		if (rc)
+			dev_err(pon->dev, "%s disable register error\n", __func__);
+	}
+
+	return size;
+}
+
+static DEVICE_ATTR(force_key_warm_reset, 0664, force_key_warm_reset_show, force_key_warm_reset_store);
+
 static ssize_t debounce_us_show(struct device *dev,
 				struct device_attribute *attr, char *buf)
 {
 	struct qpnp_pon *pon = dev_get_drvdata(dev);
-
 	return scnprintf(buf, QPNP_PON_BUFFER_SIZE, "%d\n", pon->dbc_time_us);
 }
 
@@ -1050,10 +1104,12 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	if (!cfg->old_state && !key_status) {
 		input_report_key(pon->pon_input, cfg->key_code, 1);
 		input_sync(pon->pon_input);
+		dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, 1);
 	}
 
 	input_report_key(pon->pon_input, cfg->key_code, key_status);
 	input_sync(pon->pon_input);
+	dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, key_status);
 
 	cfg->old_state = !!key_status;
 
@@ -1192,6 +1248,7 @@ static void bark_work_func(struct work_struct *work)
 		/* Report the key event and enable the bark IRQ */
 		input_report_key(pon->pon_input, cfg->key_code, 0);
 		input_sync(pon->pon_input);
+		dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, 0);
 		enable_irq(cfg->bark_irq);
 	} else {
 		/* Disable reset */
@@ -1229,6 +1286,7 @@ static irqreturn_t qpnp_resin_bark_irq(int irq, void *_pon)
 	/* Report the key event */
 	input_report_key(pon->pon_input, cfg->key_code, 1);
 	input_sync(pon->pon_input);
+	dev_info(pon->dev, "KEY_EVENT: keycode %d val 0x%02x\n", cfg->key_code, 1);
 
 	/* Schedule work to check the bark status for key-release */
 	schedule_delayed_work(&pon->bark_work, QPNP_KEY_STATUS_DELAY);
@@ -2496,7 +2554,12 @@ static int qpnp_pon_probe(struct platform_device *pdev)
 			rc);
 		return rc;
 	}
-
+	rc = device_create_file(dev, &dev_attr_force_key_warm_reset);
+	if (rc) {
+		dev_err(dev, "sysfs force key warm reset file creation failed, rc=%d\n",
+			rc);
+		return rc;
+	}
 	if (sys_reset)
 		sys_reset_dev = pon;
 	if (modem_reset)
@@ -2513,6 +2576,8 @@ static int qpnp_pon_remove(struct platform_device *pdev)
 	unsigned long flags;
 
 	device_remove_file(&pdev->dev, &dev_attr_debounce_us);
+
+	device_remove_file(&pdev->dev, &dev_attr_force_key_warm_reset);
 
 	cancel_delayed_work_sync(&pon->bark_work);
 

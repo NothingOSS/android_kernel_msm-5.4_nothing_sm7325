@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_CDM_H_
@@ -69,8 +68,6 @@
 #define CAM_CDM_BL_FIFO_LENGTH_MAX_DEFAULT 0x40
 #define CAM_CDM_BL_FIFO_LENGTH_CFG_SHIFT 0x10
 #define CAM_CDM_BL_FIFO_FLUSH_SHIFT 0x3
-#define CAM_CDM_BL_FIFO_BOUNDARY_CHECK \
-	(CAM_CDM_BL_FIFO_LENGTH_MAX_DEFAULT / 2)
 
 #define CAM_CDM_BL_FIFO_REQ_SIZE_MAX 0x00
 #define CAM_CDM_BL_FIFO_REQ_SIZE_MAX_DIV2 0x01

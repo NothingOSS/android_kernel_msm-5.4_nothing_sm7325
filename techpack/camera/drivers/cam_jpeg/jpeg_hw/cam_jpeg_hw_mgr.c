@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -143,18 +142,12 @@ static int cam_jpeg_process_next_hw_update(void *priv, void *data,
 
 	CAM_TRACE(CAM_JPEG, "Start JPEG ENC Req %llu", config_args->request_id);
 
-	if (g_jpeg_hw_mgr.camnoc_misr_test) {
-		/* configure jpeg hw and camnoc misr */
-		rc = hw_mgr->devices[dev_type][0]->hw_ops.process_cmd(
-			hw_mgr->devices[dev_type][0]->hw_priv,
-			CAM_JPEG_CMD_CONFIG_HW_MISR,
-			&g_jpeg_hw_mgr.camnoc_misr_test,
-			sizeof(g_jpeg_hw_mgr.camnoc_misr_test));
-		if (rc) {
-			CAM_ERR(CAM_JPEG, "Failed to apply the configs %d", rc);
-			goto end_error;
-		}
-	}
+	/* configure jpeg hw and camnoc misr */
+	rc = hw_mgr->devices[dev_type][0]->hw_ops.process_cmd(
+		hw_mgr->devices[dev_type][0]->hw_priv,
+		CAM_JPEG_CMD_CONFIG_HW_MISR,
+		&g_jpeg_hw_mgr.camnoc_misr_test,
+		sizeof(g_jpeg_hw_mgr.camnoc_misr_test));
 
 	rc = hw_mgr->devices[dev_type][0]->hw_ops.start(
 		hw_mgr->devices[dev_type][0]->hw_priv, NULL, 0);
@@ -221,18 +214,16 @@ static int cam_jpeg_mgr_process_irq(void *priv, void *data)
 	CAM_DBG(CAM_JPEG, "hw entry processed %d Encoded size :%d",
 		p_cfg_req->num_hw_entry_processed, task_data->result_size);
 
-	if (g_jpeg_hw_mgr.camnoc_misr_test) {
-		misr_args.req_id = p_cfg_req->req_id;
-		misr_args.enable_bug = g_jpeg_hw_mgr.bug_on_misr;
-		CAM_DBG(CAM_JPEG, "req %lld bug is enabled for MISR :%d",
-			misr_args.req_id, misr_args.enable_bug);
+	misr_args.req_id = p_cfg_req->req_id;
+	misr_args.enable_bug = g_jpeg_hw_mgr.bug_on_misr;
+	CAM_DBG(CAM_JPEG, "req %lld bug is enabled for MISR :%d",
+		misr_args.req_id, misr_args.enable_bug);
 
-		/* dump jpeg hw and camnoc misr */
-		rc = hw_mgr->devices[dev_type][0]->hw_ops.process_cmd(
-			hw_mgr->devices[dev_type][0]->hw_priv,
-			CAM_JPEG_CMD_DUMP_HW_MISR_VAL, &misr_args,
-			sizeof(struct cam_jpeg_misr_dump_args));
-	}
+	/* dump jpeg hw and camnoc misr */
+	rc = hw_mgr->devices[dev_type][0]->hw_ops.process_cmd(
+		hw_mgr->devices[dev_type][0]->hw_priv,
+		CAM_JPEG_CMD_DUMP_HW_MISR_VAL, &misr_args,
+		sizeof(struct cam_jpeg_misr_dump_args));
 
 	if ((task_data->result_size > 0) &&
 		(p_cfg_req->num_hw_entry_processed <

@@ -368,10 +368,15 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 	}
 
 	if (type == EV_ABS) {
-		if (state)
+		if (state) {
 			input_event(input, type, button->code, button->value);
+			dev_info(input->dev.parent, "KEY_EVENT: keycode %d val 0x%02x\n",
+				button->code, button->value);
+		}
 	} else {
 		input_event(input, type, *bdata->code, state);
+		dev_info(input->dev.parent, "KEY_EVENT: keycode %d val 0x%02x\n",
+			*bdata->code, state);
 	}
 	input_sync(input);
 }
@@ -405,6 +410,8 @@ static irqreturn_t gpio_keys_gpio_isr(int irq, void *dev_id)
 			 * handler to run.
 			 */
 			input_report_key(bdata->input, button->code, 1);
+			dev_info(bdata->input->dev.parent, "KEY_EVENT: keycode %d val 0x%02x\n",
+				button->code, 1);
 		}
 	}
 
@@ -425,6 +432,8 @@ static void gpio_keys_irq_timer(struct timer_list *t)
 	if (bdata->key_pressed) {
 		input_event(input, EV_KEY, *bdata->code, 0);
 		input_sync(input);
+		dev_info(input->dev.parent, "KEY_EVENT: keycode %d val 0x%02x\n",
+			*bdata->code, 0);
 		bdata->key_pressed = false;
 	}
 	spin_unlock_irqrestore(&bdata->lock, flags);
@@ -446,9 +455,13 @@ static irqreturn_t gpio_keys_irq_isr(int irq, void *dev_id)
 
 		input_event(input, EV_KEY, *bdata->code, 1);
 		input_sync(input);
+		dev_info(input->dev.parent, "KEY_EVENT: keycode %d val 0x%02x\n",
+			*bdata->code, 1);
 
 		if (!bdata->release_delay) {
 			input_event(input, EV_KEY, *bdata->code, 0);
+			dev_info(input->dev.parent, "KEY_EVENT: keycode %d val 0x%02x\n",
+				*bdata->code, 0);
 			input_sync(input);
 			goto out;
 		}

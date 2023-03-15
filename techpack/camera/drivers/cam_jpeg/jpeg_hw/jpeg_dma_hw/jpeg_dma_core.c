@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -685,22 +684,15 @@ int cam_jpeg_dma_process_cmd(void *device_priv, uint32_t cmd_type,
 		break;
 	case CAM_JPEG_CMD_CONFIG_HW_MISR:
 	{
-		if (hw_info->camnoc_misr_support)
-			rc = cam_jpeg_dma_config_cmanoc_hw_misr(hw_info, soc_info, cmd_args);
-		else
-			CAM_DBG(CAM_JPEG, "camnoc misr is not supported");
+		rc = cam_jpeg_dma_config_cmanoc_hw_misr(hw_info, soc_info, cmd_args);
 		break;
 	}
 	case CAM_JPEG_CMD_DUMP_HW_MISR_VAL:
 	{
-		if (hw_info->camnoc_misr_support) {
-			rc = cam_jpeg_dma_dump_hw_misr_val(hw_info, soc_info, cmd_args);
-			if (rc)
-				break;
-			rc = cam_jpeg_dma_dump_camnoc_misr_val(hw_info, soc_info, cmd_args);
-		} else {
-			CAM_DBG(CAM_JPEG, "camnoc misr is not supported");
-		}
+		rc = cam_jpeg_dma_dump_hw_misr_val(hw_info, soc_info, cmd_args);
+		if (rc)
+			break;
+		rc = cam_jpeg_dma_dump_camnoc_misr_val(hw_info, soc_info, cmd_args);
 		break;
 	}
 	default:
