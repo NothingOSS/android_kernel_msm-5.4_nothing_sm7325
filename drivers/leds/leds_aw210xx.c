@@ -1705,6 +1705,41 @@ static ssize_t aw210xx_music_leds_effect_store(struct device *dev,
 	mutex_unlock(&aw210xx->led_mutex);
 	return len;
 }
+
+static ssize_t aw210xx_frame_leds_effect_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t len)
+{
+    struct led_classdev *led_cdev = dev_get_drvdata(dev);
+    struct aw210xx *aw210xx = container_of(led_cdev, struct aw210xx, cdev);
+    unsigned int frame_brightness[15];
+    mutex_lock(&aw210xx->led_mutex);
+
+    if (sscanf(buf, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+            &frame_brightness[0], &frame_brightness[1], &frame_brightness[2], &frame_brightness[3], &frame_brightness[4],
+            &frame_brightness[5], &frame_brightness[6], &frame_brightness[7], &frame_brightness[8], &frame_brightness[9],
+            &frame_brightness[10], &frame_brightness[11], &frame_brightness[12], &frame_brightness[13], &frame_brightness[14]) == 15) {
+        aw210xx_single_led_br_set(aw210xx, 7, frame_brightness[0] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 1, frame_brightness[1] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 2, frame_brightness[2] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 3, frame_brightness[3] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 4, frame_brightness[4] * aw210xx->setting_br /  4095);
+        aw210xx_single_led_br_set(aw210xx, 5, frame_brightness[5] * aw210xx->setting_br /  4095);
+        aw210xx_single_led_br_set(aw210xx, 16, frame_brightness[6] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 13, frame_brightness[7] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 11, frame_brightness[8] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 9, frame_brightness[9] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 12, frame_brightness[10] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 10, frame_brightness[11] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 14, frame_brightness[12] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 15, frame_brightness[13] * aw210xx->setting_br / 4095);
+        aw210xx_single_led_br_set(aw210xx, 8, frame_brightness[14] * aw210xx->setting_br / 4095);
+        aw210xx_update(aw210xx);
+    }
+    mutex_unlock(&aw210xx->led_mutex);
+    return len;
+}
+
 static ssize_t aw210xx_video_leds_effect_store(struct device *dev,
 		struct device_attribute *attr,
 		const char *buf, size_t len)
@@ -2107,6 +2142,7 @@ static DEVICE_ATTR(random_delay, 0220, NULL, aw210xx_random_delay_store);
 static DEVICE_ATTR(random_leds_effect, 0220, NULL, aw210xx_random_leds_effect_store);
 static DEVICE_ATTR(keybd_leds_effect, 0220, NULL, aw210xx_keybd_leds_effect_store);
 static DEVICE_ATTR(music_leds_effect, 0220, NULL, aw210xx_music_leds_effect_store);
+static DEVICE_ATTR(frame_leds_effect, 0220, NULL, aw210xx_frame_leds_effect_store);
 static DEVICE_ATTR(video_leds_effect, 0220, NULL, aw210xx_video_leds_effect_store);
 static DEVICE_ATTR(ga_leds_effect, 0220, NULL, aw210xx_ga_leds_effect_store);
 static DEVICE_ATTR(nf_leds_effect, 0220, NULL, aw210xx_nf_leds_effect_store);
@@ -2143,6 +2179,7 @@ static struct attribute *aw210xx_attributes[] = {
 	&dev_attr_random_leds_effect.attr,
 	&dev_attr_keybd_leds_effect.attr,
 	&dev_attr_music_leds_effect.attr,
+	&dev_attr_frame_leds_effect.attr,
 	&dev_attr_video_leds_effect.attr,
 	&dev_attr_ga_leds_effect.attr,
 	&dev_attr_nf_leds_effect.attr,
