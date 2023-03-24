@@ -48,4 +48,6 @@
 10. OS 1.1.8
   - Update log scheme
 
+11.
+Change the branch name to sm7325/s
 
