@@ -26,6 +26,7 @@
 #define BL_NODE_NAME_SIZE 32
 #define HDR10_PLUS_VSIF_TYPE_CODE      0x81
 int finger_hbm_flag = 0;
+int hbm_mode_flag = 0;
 
 /* Autorefresh will occur after FRAME_CNT frames. Large values are unlikely */
 #define AUTOREFRESH_MAX_FRAME_CNT 6
@@ -128,7 +129,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 			display->panel->bl_config.brightness_max_level);
 
 	/*if enable hbm_mode, set brightness to HBM brightness*/
-	if (finger_hbm_flag) {
+	if (finger_hbm_flag || hbm_mode_flag) {
 		SDE_ERROR("update hbm brightness\n");
 		bl_lvl = display->panel->bl_config.bl_hbm_level;
 	}
@@ -2990,13 +2991,38 @@ static ssize_t twm_enable_show(struct device *device,
 static ssize_t hbm_mode_store(struct device *device,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
+	int rc = 0;
+	unsigned long hbm_mode;
+	struct drm_connector *conn;
+	struct sde_connector *sde_conn;
+	conn = dev_get_drvdata(device);
+	if (!conn) {
+		SDE_ERROR("invalid argument\n");
+		return count;
+	}
+	sde_conn = to_sde_connector(conn);
+	if(sde_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
+		SDE_ERROR("invalid argument\n");
+		return count;
+	}
+
+	rc = kstrtoul(buf, 0, &hbm_mode);
+	if (rc)
+		return rc;
+
+	if (hbm_mode)
+		hbm_mode_flag = 1;
+	else
+		hbm_mode_flag = 0;
+	sde_backlight_device_update_status(sde_conn->bl_device);
+
 	return count;
 }
 
 static ssize_t hbm_mode_show(struct device *device,
 	struct device_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%d\n", finger_hbm_flag);
+	return sprintf(buf, "%d\n", hbm_mode_flag);
 }
 
 static ssize_t tx_cmd_store(struct device *device,
