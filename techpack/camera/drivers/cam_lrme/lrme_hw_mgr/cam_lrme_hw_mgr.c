@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -110,6 +111,11 @@ static int cam_lrme_mgr_util_packet_validate(struct cam_packet *packet,
 
 	if (!packet->num_io_configs) {
 		CAM_ERR(CAM_LRME, "no io configs");
+		return -EINVAL;
+	}
+
+	if (!packet->num_cmd_buf) {
+		CAM_ERR(CAM_LRME, "no cmd bufs");
 		return -EINVAL;
 	}
 

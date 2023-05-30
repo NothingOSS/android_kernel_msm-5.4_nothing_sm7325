@@ -1524,6 +1524,7 @@ int __init msm_voice_host_init(void)
 void msm_voice_host_exit(void)
 {
 	platform_driver_unregister(&msm_pcm_driver);
+	mutex_destroy(&hpcm_drv.lock);
 }
 
 MODULE_DESCRIPTION("PCM module platform driver");

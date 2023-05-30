@@ -964,8 +964,13 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 					__func__, chmixer_pspd->input_channel);
 				return -EINVAL;
 			}
-			q6asm_map_channels(asm_ch_map,
+			ret = q6asm_map_channels(asm_ch_map,
 				chmixer_pspd->input_channel, false);
+			if (ret < 0) {
+				pr_err("%s q6asm_map_channels failed\n", __func__);
+				return ret;
+			}
+
 			for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 				chmixer_pspd->in_ch_map[i] = asm_ch_map[i];
 			chmixer_pspd->override_in_ch_map = true;
@@ -977,8 +982,12 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 					__func__, chmixer_pspd->output_channel);
 				return -EINVAL;
 			}
-			q6asm_map_channels(asm_ch_map,
+			ret = q6asm_map_channels(asm_ch_map,
 				chmixer_pspd->output_channel, false);
+			if (ret < 0) {
+				pr_err("%s q6asm_map_channels failed\n", __func__);
+				return ret;
+			}
 			for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 				chmixer_pspd->out_ch_map[i] = asm_ch_map[i];
 			chmixer_pspd->override_out_ch_map = true;

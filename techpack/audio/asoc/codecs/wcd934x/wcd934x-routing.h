@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #ifndef WCD934X_ROUTING_H
 #define WCD934X_ROUTING_H
@@ -71,41 +72,46 @@ const struct snd_soc_dapm_route tavil_slim_audio_map[] = {
 	{"SLIM TX11", NULL, "CDC_IF TX11 MUX"},
 	{"SLIM TX13", NULL, "CDC_IF TX13 MUX"},
 
-	{"SLIM RX0 MUX", "AIF1_PB", "AIF1 PB"},
-	{"SLIM RX1 MUX", "AIF1_PB", "AIF1 PB"},
-	{"SLIM RX2 MUX", "AIF1_PB", "AIF1 PB"},
-	{"SLIM RX3 MUX", "AIF1_PB", "AIF1 PB"},
-	{"SLIM RX4 MUX", "AIF1_PB", "AIF1 PB"},
-	{"SLIM RX5 MUX", "AIF1_PB", "AIF1 PB"},
-	{"SLIM RX6 MUX", "AIF1_PB", "AIF1 PB"},
-	{"SLIM RX7 MUX", "AIF1_PB", "AIF1 PB"},
+	{"AIF4 PB MIX", NULL, "AIF4 PB"},
+	{"AIF3 PB MIX", NULL, "AIF3 PB"},
+	{"AIF2 PB MIX", NULL, "AIF2 PB"},
+	{"AIF1 PB MIX", NULL, "AIF1 PB"},
 
-	{"SLIM RX0 MUX", "AIF2_PB", "AIF2 PB"},
-	{"SLIM RX1 MUX", "AIF2_PB", "AIF2 PB"},
-	{"SLIM RX2 MUX", "AIF2_PB", "AIF2 PB"},
-	{"SLIM RX3 MUX", "AIF2_PB", "AIF2 PB"},
-	{"SLIM RX4 MUX", "AIF2_PB", "AIF2 PB"},
-	{"SLIM RX5 MUX", "AIF2_PB", "AIF2 PB"},
-	{"SLIM RX6 MUX", "AIF2_PB", "AIF2 PB"},
-	{"SLIM RX7 MUX", "AIF2_PB", "AIF2 PB"},
+	{"SLIM RX0 MUX", "AIF1_PB", "AIF1 PB MIX"},
+	{"SLIM RX1 MUX", "AIF1_PB", "AIF1 PB MIX"},
+	{"SLIM RX2 MUX", "AIF1_PB", "AIF1 PB MIX"},
+	{"SLIM RX3 MUX", "AIF1_PB", "AIF1 PB MIX"},
+	{"SLIM RX4 MUX", "AIF1_PB", "AIF1 PB MIX"},
+	{"SLIM RX5 MUX", "AIF1_PB", "AIF1 PB MIX"},
+	{"SLIM RX6 MUX", "AIF1_PB", "AIF1 PB MIX"},
+	{"SLIM RX7 MUX", "AIF1_PB", "AIF1 PB MIX"},
 
-	{"SLIM RX0 MUX", "AIF3_PB", "AIF3 PB"},
-	{"SLIM RX1 MUX", "AIF3_PB", "AIF3 PB"},
-	{"SLIM RX2 MUX", "AIF3_PB", "AIF3 PB"},
-	{"SLIM RX3 MUX", "AIF3_PB", "AIF3 PB"},
-	{"SLIM RX4 MUX", "AIF3_PB", "AIF3 PB"},
-	{"SLIM RX5 MUX", "AIF3_PB", "AIF3 PB"},
-	{"SLIM RX6 MUX", "AIF3_PB", "AIF3 PB"},
-	{"SLIM RX7 MUX", "AIF3_PB", "AIF3 PB"},
+	{"SLIM RX0 MUX", "AIF2_PB", "AIF2 PB MIX"},
+	{"SLIM RX1 MUX", "AIF2_PB", "AIF2 PB MIX"},
+	{"SLIM RX2 MUX", "AIF2_PB", "AIF2 PB MIX"},
+	{"SLIM RX3 MUX", "AIF2_PB", "AIF2 PB MIX"},
+	{"SLIM RX4 MUX", "AIF2_PB", "AIF2 PB MIX"},
+	{"SLIM RX5 MUX", "AIF2_PB", "AIF2 PB MIX"},
+	{"SLIM RX6 MUX", "AIF2_PB", "AIF2 PB MIX"},
+	{"SLIM RX7 MUX", "AIF2_PB", "AIF2 PB MIX"},
 
-	{"SLIM RX0 MUX", "AIF4_PB", "AIF4 PB"},
-	{"SLIM RX1 MUX", "AIF4_PB", "AIF4 PB"},
-	{"SLIM RX2 MUX", "AIF4_PB", "AIF4 PB"},
-	{"SLIM RX3 MUX", "AIF4_PB", "AIF4 PB"},
-	{"SLIM RX4 MUX", "AIF4_PB", "AIF4 PB"},
-	{"SLIM RX5 MUX", "AIF4_PB", "AIF4 PB"},
-	{"SLIM RX6 MUX", "AIF4_PB", "AIF4 PB"},
-	{"SLIM RX7 MUX", "AIF4_PB", "AIF4 PB"},
+	{"SLIM RX0 MUX", "AIF3_PB", "AIF3 PB MIX"},
+	{"SLIM RX1 MUX", "AIF3_PB", "AIF3 PB MIX"},
+	{"SLIM RX2 MUX", "AIF3_PB", "AIF3 PB MIX"},
+	{"SLIM RX3 MUX", "AIF3_PB", "AIF3 PB MIX"},
+	{"SLIM RX4 MUX", "AIF3_PB", "AIF3 PB MIX"},
+	{"SLIM RX5 MUX", "AIF3_PB", "AIF3 PB MIX"},
+	{"SLIM RX6 MUX", "AIF3_PB", "AIF3 PB MIX"},
+	{"SLIM RX7 MUX", "AIF3_PB", "AIF3 PB MIX"},
+
+	{"SLIM RX0 MUX", "AIF4_PB", "AIF4 PB MIX"},
+	{"SLIM RX1 MUX", "AIF4_PB", "AIF4 PB MIX"},
+	{"SLIM RX2 MUX", "AIF4_PB", "AIF4 PB MIX"},
+	{"SLIM RX3 MUX", "AIF4_PB", "AIF4 PB MIX"},
+	{"SLIM RX4 MUX", "AIF4_PB", "AIF4 PB MIX"},
+	{"SLIM RX5 MUX", "AIF4_PB", "AIF4 PB MIX"},
+	{"SLIM RX6 MUX", "AIF4_PB", "AIF4 PB MIX"},
+	{"SLIM RX7 MUX", "AIF4_PB", "AIF4 PB MIX"},
 
 	{"SLIM RX0", NULL, "SLIM RX0 MUX"},
 	{"SLIM RX1", NULL, "SLIM RX1 MUX"},
@@ -206,9 +212,13 @@ const struct snd_soc_dapm_route tavil_audio_map[] = {
 	 */
 
 	/* Virtual input widgets */
-	{"AIF1 CAP", NULL, "AIF1_CAP Mixer"},
-	{"AIF2 CAP", NULL, "AIF2_CAP Mixer"},
-	{"AIF3 CAP", NULL, "AIF3_CAP Mixer"},
+	{"AIF1 CAP", NULL, "AIF1_CAP_MIX"},
+	{"AIF2 CAP", NULL, "AIF2_CAP_MIX"},
+	{"AIF3 CAP", NULL, "AIF3_CAP_MIX"},
+
+	{"AIF1_CAP_MIX", NULL, "AIF1_CAP Mixer"},
+	{"AIF2_CAP_MIX", NULL, "AIF2_CAP Mixer"},
+	{"AIF3_CAP_MIX", NULL, "AIF3_CAP Mixer"},
 
 	/* WDMA3 */
 	{"WDMA3 PORT0 MUX", "DEC0", "ADC MUX0"},

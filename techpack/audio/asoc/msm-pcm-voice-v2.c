@@ -850,7 +850,12 @@ int __init msm_pcm_voice_init(void)
 
 void msm_pcm_voice_exit(void)
 {
+	int i = 0;
+
 	platform_driver_unregister(&msm_pcm_driver);
+
+	for (i = 0; i < VOICE_SESSION_INDEX_MAX; i++)
+		mutex_destroy(&voice_info[i].lock);
 }
 
 MODULE_DESCRIPTION("Voice PCM module platform driver");

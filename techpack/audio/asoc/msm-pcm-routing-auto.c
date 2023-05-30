@@ -25219,7 +25219,7 @@ static const struct snd_kcontrol_new app_type_cfg_controls[] = {
 	0x7FFFFFFF, 0, 128, msm_routing_get_app_type_cfg_control,
 	msm_routing_put_app_type_cfg_control),
 	SOC_SINGLE_MULTI_EXT("App Type Gain", SND_SOC_NOPM, 0,
-	0x2000, 0, 4, NULL, msm_routing_put_app_type_gain_control)
+	0x7FFFFFFF, 0, 4, NULL, msm_routing_put_app_type_gain_control)
 };
 
 static int msm_routing_put_module_cfg_control(struct snd_kcontrol *kcontrol,

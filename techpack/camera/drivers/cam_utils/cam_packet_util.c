@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -40,6 +41,12 @@ int cam_packet_util_get_cmd_mem_addr(int handle, uint32_t **buf_addr,
 
 int cam_packet_util_validate_cmd_desc(struct cam_cmd_buf_desc *cmd_desc)
 {
+
+	if (!cmd_desc) {
+		CAM_ERR(CAM_UTIL, "Invalid cmd desc");
+		return -EINVAL;
+	}
+
 	if ((cmd_desc->length > cmd_desc->size) ||
 		(cmd_desc->mem_handle <= 0)) {
 		CAM_ERR(CAM_UTIL, "invalid cmd arg %d %d %d %d",
@@ -80,6 +87,7 @@ int cam_packet_util_validate_packet(struct cam_packet *packet,
 	pkt_wo_payload = offsetof(struct cam_packet, payload);
 
 	if ((!packet->header.size) ||
+		((size_t)packet->header.size <= pkt_wo_payload) ||
 		((pkt_wo_payload + (size_t)packet->cmd_buf_offset +
 		sum_cmd_desc) > (size_t)packet->header.size) ||
 		((pkt_wo_payload + (size_t)packet->io_configs_offset +
@@ -106,6 +114,11 @@ int cam_packet_util_get_kmd_buffer(struct cam_packet *packet,
 
 	if (!packet || !kmd_buf) {
 		CAM_ERR(CAM_UTIL, "Invalid arg %pK %pK", packet, kmd_buf);
+		return -EINVAL;
+	}
+
+	if (!packet->num_cmd_buf) {
+		CAM_ERR(CAM_UTIL, "Invalid num_cmd_buf = %d", packet->num_cmd_buf);
 		return -EINVAL;
 	}
 

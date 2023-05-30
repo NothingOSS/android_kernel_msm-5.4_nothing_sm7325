@@ -143,6 +143,10 @@ struct cam_isp_ctx_irq_ops {
  * @num_acked:                 Count to track acked entried for output.
  *                             If count equals the number of fence out, it means
  *                             the request has been completed.
+ * @early_fence_map_index      Array which stores fence map out index for resource
+ *                             which early buf done is received.
+ * @flag_sync_set              Flags to track if early bufdone fence are signalled
+ *                             or not
  * @num_deferred_acks:         Number of buf_dones/acks that are deferred to
  *                             handle or signalled in special scenarios.
  *                             Increment this count instead of num_acked and
@@ -163,12 +167,13 @@ struct cam_isp_ctx_req {
 	struct cam_ctx_request               *base;
 	struct cam_hw_update_entry            cfg[CAM_ISP_CTX_CFG_MAX];
 	uint32_t                              num_cfg;
-	struct cam_hw_fence_map_entry         fence_map_out
-						[CAM_ISP_CTX_RES_MAX];
+	struct cam_hw_fence_map_entry         fence_map_out[CAM_ISP_CTX_RES_MAX];
 	uint32_t                              num_fence_map_out;
 	struct cam_hw_fence_map_entry         fence_map_in[CAM_ISP_CTX_RES_MAX];
 	uint32_t                              num_fence_map_in;
 	uint32_t                              num_acked;
+	uint32_t                     early_fence_map_index[CAM_ISP_CTX_RES_MAX];
+	bool                                  flag_sync_set;
 	uint32_t                              num_deferred_acks;
 	uint32_t                  deferred_fence_map_index[CAM_ISP_CTX_RES_MAX];
 	int32_t                               bubble_report;

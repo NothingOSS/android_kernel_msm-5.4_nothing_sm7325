@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _WCD937X_H
@@ -50,6 +51,16 @@ static int wcd937x_swr_master_ch_map[] = {
 	SWRM_TX3_CH3,
 	SWRM_TX3_CH4,
 	SWRM_PCM_IN,
+	ADC1,
+	ADC3,
+	ADC4,
+	DMIC0,
+	DMIC1,
+	DMIC2,
+	DMIC4,
+	DMIC5,
+	DMIC6,
+	DMIC7,
 };
 
 #ifdef CONFIG_SND_SOC_WCD937X
