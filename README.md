@@ -10,6 +10,9 @@
 2. OS 1.5.3
   - Update display and power driver
 
+3. OS 1.5.4
+  - Update to LTS_5.4.210
+
 
 # How do I submit patches to Android Common Kernels
 
