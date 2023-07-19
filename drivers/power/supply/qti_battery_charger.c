@@ -56,6 +56,14 @@
 #define CONFIG_STWLC38_FW
 #define DIVIDE_1000_TIMES			1000
 #define DIVIDE_1000000_TIMES			1000000
+
+int nt_fcc_flag = -1;
+#define CYCLE_COUNT		20
+enum nt_health_chg_ctrol {
+     NT_HEALTH_ENABLE_CHG = 3,
+     NT_HEALTH_DISABLE_CHG = 4,
+};
+
 enum usb_connector_type {
 	USB_CONNECTOR_TYPE_TYPEC,
 	USB_CONNECTOR_TYPE_MICRO_USB,
@@ -784,7 +792,7 @@ static void nt_update_status_function_work(struct work_struct *work)
 					struct battery_chg_dev, nt_update_status_work.work);
 	int rc;
 	int capacity, vbat, vusbin = 0, vwls = 0,Vinput_present = 0;
-	static int	pre_capacity,Vinput_present_pre;
+	static int	pre_capacity, Vinput_present_pre, count = 0;
 	struct psy_state *pst = NULL;
 
 	if (!bcdev) {
@@ -832,6 +840,11 @@ static void nt_update_status_function_work(struct work_struct *work)
 			pm_wakeup_dev_event(bcdev->dev, 50, true);
 		}
 		pre_capacity = capacity;
+	}
+	count++;
+	if (count > CYCLE_COUNT) {
+		count = 0;
+		pr_info("nt_fcc_flag:%d\n", nt_fcc_flag);
 	}
 
 out:
@@ -2012,6 +2025,9 @@ static ssize_t slowcharge_en_store(struct class *c, struct class_attribute *attr
 		return -EINVAL;
 
 	pr_info("%s,val:%d", __func__, val);
+
+    if (val == NT_HEALTH_DISABLE_CHG || val == NT_HEALTH_ENABLE_CHG)
+        nt_fcc_flag = val;
 
 	rc = write_property_id(bcdev, &bcdev->psy_list[PSY_TYPE_USB],
 				USB_SLOWCHARGE_ENABLE, val);
