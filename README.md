@@ -16,6 +16,9 @@
 4. OS 1.5.5
   - Enable zram writeback kernel config
 
+5. OS 2.0.2
+  - Improve display driver
+  - Improve led driver
 
 # How do I submit patches to Android Common Kernels
 
