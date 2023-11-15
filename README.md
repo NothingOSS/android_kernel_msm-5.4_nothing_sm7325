@@ -20,6 +20,9 @@
   - Improve display driver
   - Improve led driver
 
+6. OS 2.0.4
+  - No update
+
 # How do I submit patches to Android Common Kernels
 
 1. BEST: Make all of your changes to upstream Linux. If appropriate, backport to the stable releases.
