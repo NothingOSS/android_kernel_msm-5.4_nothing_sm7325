@@ -444,7 +444,7 @@ static void cam_tfe_log_error_irq_status(
 		"TFE clock rate:%d TFE total bw applied:%lld",
 		top_priv->hw_clk_rate,
 		top_priv->total_bw_applied);
-	cam_cpas_log_votes();
+
 }
 
 static int cam_tfe_error_irq_bottom_half(

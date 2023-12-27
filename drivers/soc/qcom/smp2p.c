@@ -663,7 +663,7 @@ static int qcom_smp2p_probe(struct platform_device *pdev)
 		}
 	}
 
-	smp2p->ws = wakeup_source_register(&pdev->dev, "smp2p");
+	smp2p->ws = wakeup_source_register(&pdev->dev, pdev->dev.of_node->name);
 	if (!smp2p->ws) {
 		ret = -ENOMEM;
 		goto unwind_interfaces;
@@ -675,7 +675,7 @@ static int qcom_smp2p_probe(struct platform_device *pdev)
 	ret = devm_request_threaded_irq(&pdev->dev, smp2p->irq,
 					qcom_smp2p_isr, qcom_smp2p_intr,
 					IRQF_ONESHOT,
-					"smp2p", (void *)smp2p);
+					pdev->dev.of_node->name, (void *)smp2p);
 	if (ret) {
 		dev_err(&pdev->dev, "failed to request interrupt\n");
 		goto unreg_ws;

@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -22,8 +21,8 @@
 #define CAM_JPEG_CAMNOC_MISR_VAL_ROW 2
 #define CAM_JPEG_CAMNOC_MISR_VAL_COL 4
 #define CAM_JPEG_ENC_MISR_VAL_NUM    3
-#define CAM_JPEG_MISR_ID_LOW_RD      1
-#define CAM_JPEG_MISR_ID_LOW_WR      2
+#define CAM_JPEG_MISR_ID_LOW_RD      0
+#define CAM_JPEG_MISR_ID_LOW_WR      1
 
 enum cam_jpeg_hw_type {
 	CAM_JPEG_DEV_ENC,

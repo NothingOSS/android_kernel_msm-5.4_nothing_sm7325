@@ -88,14 +88,20 @@ static int qcom_smd_qrtr_probe(struct rpmsg_device *rpdev)
 		if (size > MAX_NON_WAKE_SVC_LEN)
 			size = MAX_NON_WAKE_SVC_LEN;
 		svc_arr = kmalloc_array(size, sizeof(u32), GFP_KERNEL);
+		if (!svc_arr) {
+			devm_kfree(&rpdev->dev, qdev);
+			return -ENOMEM;
+		}
 
 		of_property_read_u32_array(rpdev->dev.of_node, "qcom,non-wake-svc",
 					   svc_arr, size);
 	}
-	rc = qrtr_endpoint_register(&qdev->ep, net_id, rt, svc_arr);
-
-	if (rc)
+	rc = qrtr_endpoint_register(&qdev->ep, net_id, rt, svc_arr, size);
+	kfree(svc_arr);
+	if (rc) {
+		devm_kfree(&rpdev->dev, qdev);
 		return rc;
+	}
 
 	dev_set_drvdata(&rpdev->dev, qdev);
 

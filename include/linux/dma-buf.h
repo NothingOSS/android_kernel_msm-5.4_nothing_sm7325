@@ -556,7 +556,9 @@ void *dma_buf_vmap(struct dma_buf *);
 void dma_buf_vunmap(struct dma_buf *, void *vaddr);
 int dma_buf_get_flags(struct dma_buf *dmabuf, unsigned long *flags);
 int dma_buf_get_uuid(struct dma_buf *dmabuf, uuid_t *uuid);
-
+int is_dma_buf_file(struct file *file);
+int get_each_dmabuf(int (*callback)(const struct dma_buf *dmabuf,
+		    void *private), void *private);
 #ifdef CONFIG_DMABUF_DESTRUCTOR_SUPPORT
 /**
  * dma_buf_set_destructor - set the dma-buf's destructor

@@ -20,6 +20,7 @@
 #include <media/cam_req_mgr.h>
 #include <media/cam_defs.h>
 #include <media/cam_icp.h>
+#include "cam_mem_mgr.h"
 #include "cam_req_mgr_dev.h"
 #include "cam_subdev.h"
 #include "cam_node.h"
@@ -73,8 +74,6 @@ static int cam_icp_subdev_open(struct v4l2_subdev *sd,
 	struct cam_node *node = v4l2_get_subdevdata(sd);
 	int rc = 0;
 
-	cam_req_mgr_rwsem_read_op(CAM_SUBDEV_LOCK);
-
 	mutex_lock(&g_icp_dev.icp_lock);
 	if (g_icp_dev.open_cnt >= 1) {
 		CAM_ERR(CAM_ICP, "ICP subdev is already opened");
@@ -88,16 +87,23 @@ static int cam_icp_subdev_open(struct v4l2_subdev *sd,
 		goto end;
 	}
 
+
+	rc = cam_mem_mgr_init();
+	if (rc) {
+		CAM_ERR(CAM_CRM, "mem mgr init failed");
+		goto end;
+	}
+
 	hw_mgr_intf = &node->hw_mgr_intf;
 	rc = hw_mgr_intf->hw_open(hw_mgr_intf->hw_mgr_priv, NULL);
 	if (rc < 0) {
 		CAM_ERR(CAM_ICP, "FW download failed");
+		cam_mem_mgr_deinit();
 		goto end;
 	}
 	g_icp_dev.open_cnt++;
 end:
 	mutex_unlock(&g_icp_dev.icp_lock);
-	cam_req_mgr_rwsem_read_op(CAM_SUBDEV_UNLOCK);
 	return rc;
 }
 
@@ -133,6 +139,7 @@ int cam_icp_subdev_close_internal(struct v4l2_subdev *sd,
 		goto end;
 	}
 
+	cam_mem_mgr_deinit();
 end:
 	mutex_unlock(&g_icp_dev.icp_lock);
 	return rc;

@@ -128,7 +128,7 @@ int cam_smmu_ops(int handle, enum cam_smmu_ops_param op);
  */
 int cam_smmu_map_user_iova(int handle, int ion_fd, bool dis_delayed_unmap,
 	enum cam_smmu_map_dir dir, dma_addr_t *dma_addr, size_t *len_ptr,
-	enum cam_smmu_region_id region_id, bool is_internal, struct dma_buf *dmabuf);
+	enum cam_smmu_region_id region_id, bool is_internal);
 
 /**
  * @brief        : Maps kernel space IOVA for calling driver
@@ -304,7 +304,7 @@ int cam_smmu_put_iova(int handle, int ion_fd);
  */
 int cam_smmu_map_stage2_iova(int handle,
 	int ion_fd, enum cam_smmu_map_dir dir, dma_addr_t *dma_addr,
-	size_t *len_ptr, struct dma_buf *dmabuf);
+	size_t *len_ptr);
 
 /**
  * @brief Unmaps secure memopry for SMMU handle

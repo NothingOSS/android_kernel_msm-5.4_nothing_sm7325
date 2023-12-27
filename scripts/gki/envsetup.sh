@@ -34,6 +34,12 @@ else
 	QCOM_DEBUG_FS_FRAG=" "
 fi
 
+if [ ${NOTH_AGING_BUILD} == "true" ]; then
+	NT_AGING_FRAG=`ls ${CONFIGS_DIR}/aging.config 2> /dev/null`
+else
+	NT_AGING_FRAG=" "
+fi
+
 # Consolidate fragment may not be present for all platforms.
 QCOM_CONSOLIDATE_FRAG=`ls ${CONFIGS_DIR}/${PLATFORM_NAME}_consolidate.config 2> /dev/null`
 

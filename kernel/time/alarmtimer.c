@@ -62,6 +62,12 @@ static struct rtc_timer		rtctimer;
 static struct rtc_device	*rtcdev;
 static DEFINE_SPINLOCK(rtcdev_lock);
 
+#define NOTH_POWER_LOG_EXTENSION
+#ifdef NOTH_POWER_LOG_EXTENSION
+extern int noth_alarm_logger;
+static int alarm_debug = 0;
+#endif
+
 /**
  * alarmtimer_get_rtcdev - Return selected rtcdevice
  *
@@ -171,6 +177,14 @@ static void alarmtimer_enqueue(struct alarm_base *base, struct alarm *alarm)
 	if (alarm->state & ALARMTIMER_STATE_ENQUEUED)
 		timerqueue_del(&base->timerqueue, &alarm->node);
 
+#ifdef NOTH_POWER_LOG_EXTENSION
+	if (noth_alarm_logger) {
+		pr_info("[NOTH][alarm]%s: comm:%s pid:%d exp:%llu func:%pf\n", __func__,
+			current->comm, current->pid,
+			ktime_to_ms(alarm->node.expires), alarm->function);
+	}
+#endif
+
 	timerqueue_add(&base->timerqueue, &alarm->node);
 	alarm->state |= ALARMTIMER_STATE_ENQUEUED;
 }
@@ -215,6 +229,16 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
 	alarmtimer_dequeue(base, alarm);
 	spin_unlock_irqrestore(&base->lock, flags);
 
+#ifdef NOTH_POWER_LOG_EXTENSION
+	if (noth_alarm_logger) {
+		if (alarm_debug & 0x1) {
+			pr_info("[Noth][alarm]%s: type=%d, func=%pf, exp:%llu\n", __func__,
+				alarm->type, alarm->function, ktime_to_ms(alarm->node.expires));
+			alarm_debug &= 0xFE;
+		}
+	}
+#endif
+
 	if (alarm->function)
 		restart = alarm->function(alarm, base->gettime());
 
@@ -255,6 +279,9 @@ static int alarmtimer_suspend(struct device *dev)
 	struct rtc_device *rtc;
 	unsigned long flags;
 	struct rtc_time tm;
+#ifdef NOTH_POWER_LOG_EXTENSION
+	struct alarm* min_timer = NULL;
+#endif
 
 	spin_lock_irqsave(&freezer_delta_lock, flags);
 	min = freezer_delta;
@@ -281,6 +308,9 @@ static int alarmtimer_suspend(struct device *dev)
 			continue;
 		delta = ktime_sub(next->expires, base->gettime());
 		if (!min || (delta < min)) {
+		#ifdef NOTH_POWER_LOG_EXTENSION
+			min_timer = container_of(next, struct alarm, node);
+		#endif
 			expires = next->expires;
 			min = delta;
 			type = i;
@@ -288,6 +318,18 @@ static int alarmtimer_suspend(struct device *dev)
 	}
 	if (min == 0)
 		return 0;
+
+#ifdef NOTH_POWER_LOG_EXTENSION
+	if (noth_alarm_logger) {
+		if (min_timer){
+			pr_info("[NOTH][alarm]%s: [%p]type=%d, func=%pf, exp:%llu\n", __func__,
+				min_timer, min_timer->type, min_timer->function,
+				ktime_to_ms(min_timer->node.expires));
+			min_timer = NULL;
+		}
+		alarm_debug = 0x1;
+	}
+#endif
 
 	if (ktime_to_ns(min) < 2 * NSEC_PER_SEC) {
 		__pm_wakeup_event(ws, 2 * MSEC_PER_SEC);

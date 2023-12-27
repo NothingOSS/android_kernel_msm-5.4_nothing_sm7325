@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
@@ -71,8 +70,7 @@ static struct cam_jpeg_enc_device_hw_info cam_jpeg_enc_hw_info = {
 	.reg_dump = {
 		.start_offset = 0x0,
 		.end_offset = 0x33C,
-	},
-	.camnoc_misr_support = 0,
+	}
 };
 
 #endif /* CAM_JPEG_ENC_HW_INFO_TITAN170_H */

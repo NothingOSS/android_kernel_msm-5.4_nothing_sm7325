@@ -507,6 +507,12 @@ config PROFILER
 	  It exposes APIs for userspace to get system profiling
 	  information.
 
+config ST21NFC
+	tristate "ST Microelectronics ST21NFC/ST54 NFC Controller Driver"
+	depends on I2C
+	help
+	  ST Microelectronics ST21NFC Near Field Communication controller support.
+
 config WIGIG_SENSING_SPI
 	tristate "Sensing over 60GHz using wil6210 / SPI bus"
 	depends on SPI && WIL6210
@@ -523,6 +529,21 @@ config HISI_HIKEY_USB
 	depends on OF && GPIOLIB
 	help
 	  If you say yes here you get support for usb functionality of HiSilicon Hikey Platform.
+
+config NT_HWID
+        bool "NT Hardware ID Driver"
+        help
+          NT Hardware ID Driver.
+
+config NT_SECURE_STATE
+        bool "NT Secure State Driver"
+        help
+          NT Secure State Driver.
+
+config NT_SLOT_STATE
+        bool "NT SLOT State Driver"
+        help
+          NT SLOT State Driver.
 
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"

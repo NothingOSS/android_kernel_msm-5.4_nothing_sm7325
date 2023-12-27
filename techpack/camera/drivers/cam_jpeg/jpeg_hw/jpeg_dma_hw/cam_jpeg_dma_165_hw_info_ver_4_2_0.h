@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
  */
 
@@ -71,7 +70,6 @@ static struct cam_jpeg_dma_device_hw_info cam_jpeg_dma_165_hw_info = {
 	.camnoc_misr_sigdata = 4,
 	.master_we_sel = 2,
 	.misr_rd_word_sel = 4,
-	.camnoc_misr_support = 1,
 };
 
 #endif /* CAM_JPEG_DMA_165_HW_INFO_VER_4_2_0_H */

@@ -31,6 +31,7 @@
 #include "xattr.h"
 #include "gc.h"
 #include "trace.h"
+#include "nt_f2fs.h"
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/f2fs.h>
@@ -74,6 +75,18 @@ void f2fs_build_fault_attr(struct f2fs_sb_info *sbi, unsigned int rate,
 		memset(ffi, 0, sizeof(struct f2fs_fault_info));
 }
 #endif
+
+static struct f2fs_sb_info *nt_sbi = NULL;
+
+int NT_is_data_full(void) {
+	block_t compute_free_count;
+
+	if(unlikely(!nt_sbi))
+		return 0;
+
+	compute_free_count = nt_sbi->user_block_count - nt_sbi->total_valid_block_count - nt_sbi->current_reserved_blocks;
+	return (compute_free_count <=  nt_sbi->unusable_block_count + F2FS_OPTION(nt_sbi).root_reserved_blocks);
+}
 
 /* f2fs-wide shrinker description */
 static struct shrinker f2fs_shrinker_info = {
@@ -3878,6 +3891,8 @@ reset_checkpoint:
 	f2fs_update_time(sbi, CP_TIME);
 	f2fs_update_time(sbi, REQ_TIME);
 	clear_sbi_flag(sbi, SBI_CP_DISABLED_QUICK);
+	if(F2FS_OPTION(sbi).inlinecrypt)
+		nt_sbi = sbi;
 	return 0;
 
 sync_free_meta:

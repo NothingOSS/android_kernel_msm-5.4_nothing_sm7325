@@ -202,7 +202,6 @@ struct dbm_reg_data {
 	u32 offset;
 	unsigned int ep_mult;
 };
-
 #define DBM_1_4_NUM_EP		4
 #define DBM_1_5_NUM_EP		8
 

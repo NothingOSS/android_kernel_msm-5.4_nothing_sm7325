@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
@@ -41,8 +40,7 @@ static struct cam_jpeg_dma_device_hw_info cam_jpeg_dma_hw_info = {
 		.resetdone = CAM_JPEGDMA_HW_MASK_COMP_RESET_ACK,
 		.iserror = 0x0,
 		.stopdone = CAM_JPEGDMA_HW_IRQ_STATUS_AXI_HALT,
-	},
-	.camnoc_misr_support = 0,
+	}
 };
 
 #endif /* CAM_JPEG_DMA_HW_INFO_VER_4_2_0_H */

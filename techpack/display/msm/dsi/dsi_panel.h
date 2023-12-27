@@ -22,6 +22,7 @@
 #include "msm_drv.h"
 
 #define MAX_BL_LEVEL 4096
+#define HBM_BL_LEVEL 4094
 #define MAX_BL_SCALE_LEVEL 1024
 #define MAX_SV_BL_SCALE_LEVEL 65535
 #define DSI_CMD_PPS_SIZE 135
@@ -120,6 +121,7 @@ struct dsi_backlight_config {
 
 	u32 bl_min_level;
 	u32 bl_max_level;
+	u32 bl_hbm_level;
 	u32 brightness_max_level;
 	u32 bl_level;
 	u32 bl_scale;

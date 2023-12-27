@@ -230,4 +230,7 @@ source "drivers/interconnect/Kconfig"
 
 source "drivers/counter/Kconfig"
 
+source "drivers/nothing_stability/Kconfig"
+
+source "drivers/nothing_thermal/Kconfig"
 endmenu
