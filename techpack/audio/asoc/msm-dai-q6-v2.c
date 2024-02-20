@@ -45,6 +45,9 @@
 #define AFE_API_VERSION_CLOCK_SET 1
 #define MSM_DAI_SYSFS_ENTRY_MAX_LEN 64
 
+#define AFE_PORT_ID_TFADSP_RX              (0x1000)
+#define AFE_PORT_ID_TFADSP_TX              (0x1001)
+
 #define DAI_FORMATS_S16_S24_S32_LE (SNDRV_PCM_FMTBIT_S16_LE | \
 				    SNDRV_PCM_FMTBIT_S24_LE | \
 				    SNDRV_PCM_FMTBIT_S32_LE)
@@ -6138,7 +6141,16 @@ static int msm_dai_q6_mi2s_hw_params(struct snd_pcm_substream *substream,
 		&mi2s_dai_data->mi2s_dai;
 	struct msm_dai_q6_dai_data *dai_data = &mi2s_dai_config->mi2s_dai_data;
 	struct afe_param_id_i2s_cfg *i2s = &dai_data->port_config.i2s;
+#ifdef CONFIG_SND_SOC_TFA98XX
+		u16 port_id = 0;
 
+		if (msm_mi2s_get_port_id(dai->id, substream->stream,
+					 &port_id) != 0) {
+			dev_err(dai->dev, "%s: Invalid Port ID 0x%x\n",
+					__func__, port_id);
+			return -EINVAL;
+		}
+#endif
 	dai_data->channels = params_channels(params);
 	switch (dai_data->channels) {
 	case 15:

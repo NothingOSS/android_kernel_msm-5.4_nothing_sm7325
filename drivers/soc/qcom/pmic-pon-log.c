@@ -254,6 +254,8 @@ static int pmic_pon_log_print_reason(char *buf, int buf_size, u8 data,
 
 #define BUF_SIZE 128
 
+bool trigger_panic = 0;
+
 static int pmic_pon_log_parse_entry(const struct pmic_pon_log_entry *entry,
 		void *ipc_log)
 {
@@ -443,6 +445,9 @@ static int pmic_pon_log_parse_entry(const struct pmic_pon_log_entry *entry,
 		ipc_log_string(ipc_log, "State=Unknown (0x%02X); %s\n",
 				entry->state, buf);
 
+	if(strstr(buf, "GP_FAULT"))
+		trigger_panic = 1;
+
 	return 0;
 }
 
@@ -487,6 +492,14 @@ static int pmic_pon_log_parse(struct nvmem_device *nvmem, void *ipc_log)
 		ret = pmic_pon_log_parse_entry(&entry, ipc_log);
 		if (ret < 0)
 			return ret;
+	}
+
+	if (trigger_panic) {
+#ifdef CONFIG_GP_FAULT_PANIC
+		panic("GP_FAULT happen, get ram dump");
+#else
+		pr_err("GP_FAULT happen\n");
+#endif
 	}
 
 	return 0;

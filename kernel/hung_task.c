@@ -59,11 +59,26 @@ unsigned long __read_mostly sysctl_hung_task_check_interval_secs;
 
 int __read_mostly sysctl_hung_task_warnings = 10;
 
+unsigned int __read_mostly sysctl_hung_task_monitor_userspace = 0;
+
 static int __read_mostly did_panic;
 static bool hung_task_show_lock;
 static bool hung_task_call_panic;
 
 static struct task_struct *watchdog_task;
+
+const char *need_hung_task_pass_process[] = {
+	"mdss_dsi_event",
+	"msm-core:sampli",
+	"mdss_fb0",
+	"mdss_fb_ffl0",
+	"hdcp_2x",
+	"dp_hdcp2p2",
+	"fb_flush",
+	"crtc_commit",
+	"crtc_event",
+	"soc:qcom,svm_ne"
+};
 
 /*
  * Should we panic (and reboot, if panic_timeout= is set) when a
@@ -174,6 +189,20 @@ static bool rcu_lock_break(struct task_struct *g, struct task_struct *t)
 	return can_cont;
 }
 
+static bool is_hung_task_pass_process(struct task_struct *t)
+{
+	int i = 0;
+
+	if(t->mm && strncmp(t->comm, "init", TASK_COMM_LEN))
+		return !sysctl_hung_task_monitor_userspace;
+
+	for (i = 0; i < ARRAY_SIZE(need_hung_task_pass_process); i ++) {
+		if (!strncmp(t->comm,need_hung_task_pass_process[i], TASK_COMM_LEN)) {
+			return true;
+		}
+	}
+	return false;
+}
 /*
  * Check whether a TASK_UNINTERRUPTIBLE does not get woken up for
  * a really long time (120 seconds). If that happens, print out
@@ -202,12 +231,18 @@ static void check_hung_uninterruptible_tasks(unsigned long timeout)
 				goto unlock;
 			last_break = jiffies;
 		}
+
+		if (is_hung_task_pass_process(t)) {
+			continue;
+		}
 		/* use "==" to skip the TASK_KILLABLE tasks waiting on NFS */
-		if (t->state == TASK_UNINTERRUPTIBLE)
+		if (t->state == TASK_UNINTERRUPTIBLE) {
+			pr_err("hung_task: hanging process detected: %s\n", t->comm);
 			/* Check for selective monitoring */
 			if (!sysctl_hung_task_selective_monitoring ||
 			    t->hang_detection_enabled)
 				check_hung_task(t, timeout);
+		}
 	}
  unlock:
 	rcu_read_unlock();

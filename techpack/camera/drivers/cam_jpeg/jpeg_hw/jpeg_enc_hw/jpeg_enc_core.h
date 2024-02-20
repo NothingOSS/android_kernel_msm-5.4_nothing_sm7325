@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -78,7 +77,6 @@ struct cam_jpeg_enc_device_hw_info {
 	uint32_t max_misr;
 	uint32_t max_misr_rd;
 	uint32_t camnoc_misr_sigdata;
-	uint32_t camnoc_misr_support;
 	int32_t prev_camnoc_misr_val[
 		CAM_JPEG_CAMNOC_MISR_VAL_ROW][CAM_JPEG_CAMNOC_MISR_VAL_COL];
 	int32_t prev_enc_misr_val[CAM_JPEG_ENC_MISR_VAL_NUM][

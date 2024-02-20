@@ -43,6 +43,11 @@
 #define ERR_READY	0
 #define PBL_DONE	1
 
+#define SA_DUMP_FLAG
+#ifdef SA_DUMP_FLAG
+static struct platform_device *pil_pdev = NULL;
+#endif
+
 #define desc_to_data(d) container_of(d, struct pil_tz_data, desc)
 #define subsys_to_data(d) container_of(d, struct pil_tz_data, subsys_desc)
 
@@ -764,6 +769,10 @@ static void log_failure_reason(const struct pil_tz_data *d)
 	char *smem_reason, reason[MAX_SSR_REASON_LEN];
 	const char *name = d->subsys_desc.name;
 
+#ifdef SA_DUMP_FLAG
+	int ret;
+	char *envp[3];
+#endif
 	if (d->smem_id == -1)
 		return;
 
@@ -780,6 +789,17 @@ static void log_failure_reason(const struct pil_tz_data *d)
 
 	strlcpy(reason, smem_reason, min(size, (size_t)MAX_SSR_REASON_LEN));
 	pr_err("%s subsystem failure reason: %s.\n", name, reason);
+
+#ifdef SA_DUMP_FLAG
+	envp[0] = kasprintf(GFP_KERNEL, "SUBSYS_NAME=%s", name);
+	envp[1] = kasprintf(GFP_KERNEL, "CRASH_REASON=%s", reason);
+	envp[2] = NULL;
+	pr_err("fire an uevent for subsys crash! ++ \n");
+	ret = kobject_uevent_env(&pil_pdev->dev.kobj, KOBJ_CHANGE, envp);
+	pr_err("fire an uevent for subsys crash! -- %d\n", ret);
+	kfree(envp[0]);
+	kfree(envp[1]);
+#endif
 }
 
 static int subsys_shutdown(const struct subsys_desc *subsys, bool force_stop)
@@ -1593,6 +1613,18 @@ static int pil_tz_scm_pas_probe(struct platform_device *pdev)
 	}
 	is_inited = 1;
 
+#ifdef SA_DUMP_FLAG
+	if (pil_pdev)
+	{
+		pr_err("pil_pdev exist\n");
+	}
+	else
+	{
+		pr_err("pil_pdev is NULL, save pdev, pdev->dev.kobj name: '%s' (%p): %s\n",
+				kobject_name(&pdev->dev.kobj), &pdev->dev.kobj, __func__);
+		pil_pdev = pdev;
+	}
+#endif
 	return ret;
 }
 

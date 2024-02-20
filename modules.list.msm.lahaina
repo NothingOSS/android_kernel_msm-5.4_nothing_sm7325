@@ -42,3 +42,4 @@ usb_f_diag.ko
 usb_f_ccid.ko
 usb_f_cdev.ko
 typec.ko
+nothing_bootloader_log.ko

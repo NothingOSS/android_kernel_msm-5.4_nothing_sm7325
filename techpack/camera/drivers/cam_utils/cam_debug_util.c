@@ -257,11 +257,12 @@ const char *cam_get_tag_name(unsigned int tag_id)
 void cam_debug_log(unsigned int module_id, const char *func, const int line,
 	const char *fmt, ...)
 {
-	if (debug_mdl & module_id) {
-		char str_buffer[STR_BUFFER_MAX_LENGTH];
-		va_list args;
+	char str_buffer[STR_BUFFER_MAX_LENGTH];
+	va_list args;
 
-		va_start(args, fmt);
+	va_start(args, fmt);
+
+	if (debug_mdl & module_id) {
 		vsnprintf(str_buffer, STR_BUFFER_MAX_LENGTH, fmt, args);
 
 		if ((debug_type == 0) || (debug_type == 2)) {
@@ -280,9 +281,9 @@ void cam_debug_log(unsigned int module_id, const char *func, const int line,
 				func, line, str_buffer);
 			trace_cam_log_debug(trace_buffer);
 		}
-
-		va_end(args);
 	}
+
+	va_end(args);
 }
 
 void cam_debug_trace(unsigned int tag, unsigned int module_id,

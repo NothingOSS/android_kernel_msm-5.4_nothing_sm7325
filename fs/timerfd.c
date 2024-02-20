@@ -48,6 +48,11 @@ struct timerfd_ctx {
 static LIST_HEAD(cancel_list);
 static DEFINE_SPINLOCK(cancel_lock);
 
+#define NOTH_POWER_LOG_EXTENSION
+#ifdef NOTH_POWER_LOG_EXTENSION
+extern int noth_alarm_logger;
+#endif
+
 static inline bool isalarm(struct timerfd_ctx *ctx)
 {
 	return ctx->clockid == CLOCK_REALTIME_ALARM ||
@@ -238,6 +243,14 @@ static __poll_t timerfd_poll(struct file *file, poll_table *wait)
 	spin_lock_irqsave(&ctx->wqh.lock, flags);
 	if (ctx->ticks)
 		events |= EPOLLIN;
+#ifdef NOTH_POWER_LOG_EXTENSION
+	if (noth_alarm_logger) {
+		if (ctx->expired && isalarm(ctx))
+			pr_info("[NOTH]%s: comm:%s pid:%d exp:%llu\n", __func__,
+				current->comm, current->pid,
+				ktime_to_ms(ctx->t.alarm.node.expires));
+	}
+#endif
 	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
 
 	return events;

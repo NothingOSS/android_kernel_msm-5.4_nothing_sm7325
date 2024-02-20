@@ -1357,6 +1357,11 @@ config SDX_EXT_IPC
 
       If unsure, say N.
 
+config GP_FAULT_PANIC
+	tristate "trigger panic when GP_FAULT"
+	help
+	  If enable this config, The device will into dump mode when GP_FAULT.
+
 source "drivers/soc/qcom/icnss2/Kconfig"
 
 source "drivers/soc/qcom/gnsssirf/Kconfig"

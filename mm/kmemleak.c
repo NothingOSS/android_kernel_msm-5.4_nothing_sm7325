@@ -170,6 +170,8 @@ struct kmemleak_object {
 #define OBJECT_NO_SCAN		(1 << 2)
 /* flag set to fully scan the object when scan_area allocation failed */
 #define OBJECT_FULL_SCAN	(1 << 3)
+/* flag set for object allocated with physical address */
+#define OBJECT_PHYS		(1 << 4)
 
 #define HEX_PREFIX		"    "
 /* number of bytes to print per line; must be 16 or 32 */
@@ -228,10 +230,12 @@ static int kmemleak_skip_disable;
 /* If there are leaks that can be reported */
 static bool kmemleak_found_leaks;
 
-static bool kmemleak_verbose;
-module_param_named(verbose, kmemleak_verbose, bool, 0600);
+static bool kmemleak_verbose = true;
+//module_param_named(verbose, kmemleak_verbose, bool, 0600);
 
 static void kmemleak_disable(void);
+
+static unsigned long long total_leak_bytes = 0;
 
 /*
  * Print a warning and dump the stack trace.
@@ -336,6 +340,8 @@ static void print_unreferenced(struct seq_file *seq,
 {
 	int i;
 	unsigned int msecs_age = jiffies_to_msecs(jiffies - object->jiffies);
+
+	total_leak_bytes += object->size;
 
 	warn_or_seq_printf(seq, "unreferenced object 0x%08lx (size %zu):\n",
 		   object->pointer, object->size);
@@ -568,7 +574,7 @@ static int __save_stack_trace(unsigned long *trace)
  * memory block and add it to the object_list and object_tree_root.
  */
 static struct kmemleak_object *create_object(unsigned long ptr, size_t size,
-					     int min_count, gfp_t gfp)
+					     int min_count, gfp_t gfp, bool is_phys)
 {
 	unsigned long flags;
 	struct kmemleak_object *object, *parent;
@@ -587,7 +593,7 @@ static struct kmemleak_object *create_object(unsigned long ptr, size_t size,
 	INIT_HLIST_HEAD(&object->area_list);
 	spin_lock_init(&object->lock);
 	atomic_set(&object->use_count, 1);
-	object->flags = OBJECT_ALLOCATED;
+	object->flags = OBJECT_ALLOCATED | (is_phys ? OBJECT_PHYS : 0);
 	object->pointer = ptr;
 	object->size = size;
 	object->excess_ref = 0;
@@ -720,10 +726,10 @@ static void delete_object_part(unsigned long ptr, size_t size)
 	end = object->pointer + object->size;
 	if (ptr > start)
 		create_object(start, ptr - start, object->min_count,
-			      GFP_KERNEL);
+			      GFP_KERNEL, object->flags & OBJECT_PHYS);
 	if (ptr + size < end)
 		create_object(ptr + size, end - ptr - size, object->min_count,
-			      GFP_KERNEL);
+			      GFP_KERNEL, object->flags & OBJECT_PHYS);
 
 	__delete_object(object);
 }
@@ -895,7 +901,7 @@ void __ref kmemleak_alloc(const void *ptr, size_t size, int min_count,
 	pr_debug("%s(0x%p, %zu, %d)\n", __func__, ptr, size, min_count);
 
 	if (kmemleak_enabled && ptr && !IS_ERR(ptr))
-		create_object((unsigned long)ptr, size, min_count, gfp);
+		create_object((unsigned long)ptr, size, min_count, gfp, false);
 }
 EXPORT_SYMBOL_GPL(kmemleak_alloc);
 
@@ -922,7 +928,7 @@ void __ref kmemleak_alloc_percpu(const void __percpu *ptr, size_t size,
 	if (kmemleak_enabled && ptr && !IS_ERR(ptr))
 		for_each_possible_cpu(cpu)
 			create_object((unsigned long)per_cpu_ptr(ptr, cpu),
-				      size, 0, gfp);
+				      size, 0, gfp, false);
 }
 EXPORT_SYMBOL_GPL(kmemleak_alloc_percpu);
 
@@ -944,7 +950,7 @@ void __ref kmemleak_vmalloc(const struct vm_struct *area, size_t size, gfp_t gfp
 	 * the virtual address of the vmalloc'ed block.
 	 */
 	if (kmemleak_enabled) {
-		create_object((unsigned long)area->addr, size, 2, gfp);
+		create_object((unsigned long)area->addr, size, 2, gfp, false);
 		object_set_excess_ref((unsigned long)area,
 				      (unsigned long)area->addr);
 	}
@@ -1410,6 +1416,7 @@ static void kmemleak_scan(void)
 
 	jiffies_last_scan = jiffies;
 
+	pr_warn("kmemleak scan!\n");
 	/* prepare the kmemleak_object's */
 	rcu_read_lock();
 	list_for_each_entry_rcu(object, &object_list, object_list) {
@@ -1425,6 +1432,13 @@ static void kmemleak_scan(void)
 			dump_object_info(object);
 		}
 #endif
+
+		/* outside lowmem, make it black */
+		if (object->flags & OBJECT_PHYS)
+			if (PHYS_PFN(__pa((void *)object->pointer)) < min_low_pfn ||
+			    PHYS_PFN(__pa((void *)object->pointer)) >= max_low_pfn)
+				__paint_it(object, KMEMLEAK_BLACK);
+
 		/* reset the reference count (whiten the object) */
 		object->count = 0;
 		if (color_gray(object) && get_object(object))
@@ -1542,8 +1556,9 @@ static void kmemleak_scan(void)
 	if (new_leaks) {
 		kmemleak_found_leaks = true;
 
-		pr_info("%d new suspected memory leaks (see /sys/kernel/debug/kmemleak)\n",
+		pr_err("%d new suspected memory leaks (see /sys/kernel/debug/kmemleak)\n",
 			new_leaks);
+		pr_err("total kmemleak bytes %llu\n", total_leak_bytes);
 	}
 
 }
@@ -1949,14 +1964,14 @@ void __init kmemleak_init(void)
 
 	/* register the data/bss sections */
 	create_object((unsigned long)_sdata, _edata - _sdata,
-		      KMEMLEAK_GREY, GFP_ATOMIC);
+		      KMEMLEAK_GREY, GFP_ATOMIC, false);
 	create_object((unsigned long)__bss_start, __bss_stop - __bss_start,
-		      KMEMLEAK_GREY, GFP_ATOMIC);
+		      KMEMLEAK_GREY, GFP_ATOMIC, false);
 	/* only register .data..ro_after_init if not within .data */
 	if (&__start_ro_after_init < &_sdata || &__end_ro_after_init > &_edata)
 		create_object((unsigned long)__start_ro_after_init,
 			      __end_ro_after_init - __start_ro_after_init,
-			      KMEMLEAK_GREY, GFP_ATOMIC);
+			      KMEMLEAK_GREY, GFP_ATOMIC, false);
 }
 
 /*

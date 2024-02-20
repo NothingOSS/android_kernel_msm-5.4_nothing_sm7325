@@ -1030,7 +1030,6 @@ static int cam_cpas_util_apply_default_axi_vote(
 	struct cam_cpas *cpas_core = (struct cam_cpas *) cpas_hw->core_info;
 	struct cam_cpas_axi_port *axi_port = NULL;
 	uint64_t mnoc_ab_bw = 0, mnoc_ib_bw = 0;
-	uint64_t applied_ab_bw = 0, applied_ib_bw = 0;
 	int rc = 0, i = 0;
 
 	mutex_lock(&cpas_core->tree_lock);
@@ -1058,8 +1057,6 @@ static int cam_cpas_util_apply_default_axi_vote(
 				mnoc_ab_bw, mnoc_ib_bw, rc);
 			goto unlock_tree;
 		}
-		cpas_core->axi_port[i].applied_ab_bw = applied_ab_bw;
-		cpas_core->axi_port[i].applied_ib_bw = applied_ib_bw;
 	}
 
 unlock_tree:

@@ -1149,6 +1149,10 @@ const char * const vmstat_text[] = {
 	"nr_isolated_file",
 	"workingset_nodes",
 	"workingset_refault",
+#ifdef CONFIG_LRU_GEN
+	"mglru_refault_anon",
+	"mglru_refault_file",
+#endif
 	"workingset_activate",
 	"workingset_restore",
 	"workingset_nodereclaim",

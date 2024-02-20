@@ -31,7 +31,11 @@
 #include <linux/of.h>
 #include <asm/current.h>
 #include <linux/timer.h>
-
+#define ENABLE_MODEM_RESTART
+#ifdef ENABLE_MODEM_RESTART
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+#endif
 #define CREATE_TRACE_POINTS
 #include <trace/events/trace_msm_ssr_event.h>
 
@@ -1611,9 +1615,51 @@ static struct notifier_block panic_nb = {
 	.notifier_call  = ssr_panic_handler,
 };
 
+#ifdef ENABLE_MODEM_RESTART
+static int modem_restart(void)
+{
+	int ret;
+	int orig_level;  //add for change back the default restart level after triggering modem restart
+	struct subsys_device *dev = find_subsys_device("modem");
+
+	if (!dev)
+		return -ENODEV;
+
+	pr_err("modem restart triggered\n");
+	orig_level = dev->restart_level;
+	dev->restart_level = RESET_SUBSYS_COUPLED;
+	ret = subsystem_restart_dev(dev);
+	dev->restart_level = orig_level;
+	put_device(&dev->dev);
+	return ret;
+}
+
+static int modem_restart_show(struct seq_file *m, void *v)
+{
+	seq_printf(m, "trigger modem restart\n");
+	modem_restart();
+	return 0;
+}
+
+static int modem_restart_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, modem_restart_show, inode->i_private);
+}
+
+static const struct file_operations modem_restart_fops = {
+	.open = modem_restart_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+#endif
+
 static int __init subsys_restart_init(void)
 {
 	int ret;
+#ifdef ENABLE_MODEM_RESTART
+	struct proc_dir_entry *dir;
+#endif
 
 	ssr_wq = alloc_workqueue("ssr_wq",
 		WQ_UNBOUND | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 0);
@@ -1633,6 +1679,14 @@ static int __init subsys_restart_init(void)
 	ret = atomic_notifier_chain_register(&panic_notifier_list, &panic_nb);
 	if (ret)
 		goto err_soc;
+
+#ifdef ENABLE_MODEM_RESTART
+	dir = proc_create("modem_restart", 0440, NULL, &modem_restart_fops);
+	if (!dir) {
+		pr_alert("Now in %s. proc_create.dir = %p\n", __func__, dir);
+		return -1;
+	}
+#endif
 
 	return 0;
 

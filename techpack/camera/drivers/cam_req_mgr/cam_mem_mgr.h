@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _CAM_MEM_MGR_H_
@@ -12,12 +11,6 @@
 #include <media/cam_req_mgr.h>
 #include "cam_mem_mgr_api.h"
 
-/* Enum for possible mem mgr states */
-enum cam_mem_mgr_state {
-	CAM_MEM_MGR_UNINITIALIZED,
-	CAM_MEM_MGR_INITIALIZED,
-};
-
 /*Enum for possible SMMU operations */
 enum cam_smmu_mapping_client {
 	CAM_SMMU_MAPPING_USER,
@@ -27,24 +20,21 @@ enum cam_smmu_mapping_client {
 /**
  * struct cam_mem_buf_queue
  *
- * @dma_buf:        pointer to the allocated dma_buf in the table
- * @q_lock:         mutex lock for buffer
- * @hdls:           list of mapped handles
- * @num_hdl:        number of handles
- * @fd:             file descriptor of buffer
- * @buf_handle:     unique handle for buffer
- * @align:          alignment for allocation
- * @len:            size of buffer
- * @flags:          attributes of buffer
- * @vaddr:          IOVA of buffer
- * @kmdvaddr:       Kernel virtual address
- * @active:         state of the buffer
- * @is_imported:    Flag indicating if buffer is imported from an FD in user space
- * @is_internal:    Flag indicating kernel allocated buffer
- * @timestamp:      Timestamp at which this entry in tbl was made
- * @krefcount:      Reference counter to track whether the buffer is
- *                  mapped and in use
- * @smmu_mapping_client: Client buffer (User or kernel)
+ * @dma_buf:     pointer to the allocated dma_buf in the table
+ * @q_lock:      mutex lock for buffer
+ * @hdls:        list of mapped handles
+ * @num_hdl:     number of handles
+ * @fd:          file descriptor of buffer
+ * @buf_handle:  unique handle for buffer
+ * @align:       alignment for allocation
+ * @len:         size of buffer
+ * @flags:       attributes of buffer
+ * @vaddr:       IOVA of buffer
+ * @kmdvaddr:    Kernel virtual address
+ * @active:      state of the buffer
+ * @is_imported: Flag indicating if buffer is imported from an FD in user space
+ * @is_internal: Flag indicating kernel allocated buffer
+ * @timestamp:   Timestamp at which this entry in tbl was made
  */
 struct cam_mem_buf_queue {
 	struct dma_buf *dma_buf;
@@ -62,8 +52,6 @@ struct cam_mem_buf_queue {
 	bool is_imported;
 	bool is_internal;
 	struct timespec64 timestamp;
-	struct kref krefcount;
-	enum cam_smmu_mapping_client smmu_mapping_client;
 };
 
 /**

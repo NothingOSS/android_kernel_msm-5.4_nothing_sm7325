@@ -27,6 +27,7 @@
 #define WCD_MBHC_ADC_HPH_THRESHOLD_MV   75
 #define WCD_MBHC_ADC_MICBIAS_MV         1800
 #define WCD_MBHC_FAKE_INS_RETRY         4
+#define WCD_MBHC_SWAP
 
 static int wcd_mbhc_get_micbias(struct wcd_mbhc *mbhc)
 {
@@ -280,7 +281,7 @@ done:
 
 	return anc_mic_found;
 }
-
+#ifdef WCD_MBHC_SWAP
 /* To determine if cross connection occurred */
 static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 {
@@ -391,7 +392,7 @@ static int wcd_mbhc_adc_get_spl_hs_thres(struct wcd_mbhc *mbhc)
 	}
 	return hs_threshold;
 }
-
+#endif
 static int wcd_mbhc_adc_get_hs_thres(struct wcd_mbhc *mbhc)
 {
 	int hs_threshold, micbias_mv;
@@ -427,7 +428,7 @@ static int wcd_mbhc_adc_get_hph_thres(struct wcd_mbhc *mbhc)
 	}
 	return hph_threshold;
 }
-
+#ifdef WCD_MBHC_SWAP
 static bool wcd_mbhc_adc_check_for_spl_headset(struct wcd_mbhc *mbhc,
 					   int *spl_hs_cnt)
 {
@@ -568,6 +569,7 @@ static void wcd_mbhc_adc_update_fsm_source(struct wcd_mbhc *mbhc,
 
 	};
 }
+#endif
 
 /* should be called under interrupt context that hold suspend */
 static void wcd_schedule_hs_detect_plug(struct wcd_mbhc *mbhc,
@@ -621,6 +623,7 @@ static void wcd_mbhc_adc_detect_plug_type(struct wcd_mbhc *mbhc)
 	wcd_schedule_hs_detect_plug(mbhc, &mbhc->correct_plug_swch);
 	pr_debug("%s: leave\n", __func__);
 }
+#ifdef WCD_MBHC_SWAP
 
 static void wcd_micbias_disable(struct wcd_mbhc *mbhc)
 {
@@ -633,7 +636,7 @@ static void wcd_micbias_disable(struct wcd_mbhc *mbhc)
 		mbhc->micbias_enable = false;
 	}
 }
-
+#endif
 static int wcd_mbhc_get_plug_from_adc(struct wcd_mbhc *mbhc, int adc_result)
 
 {
@@ -659,6 +662,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	struct wcd_mbhc *mbhc;
 	struct snd_soc_component *component;
 	enum wcd_mbhc_plug_type plug_type = MBHC_PLUG_TYPE_INVALID;
+#ifdef WCD_MBHC_SWAP
 	unsigned long timeout;
 	bool wrk_complete = false;
 	int pt_gnd_mic_swap_cnt = 0;
@@ -666,9 +670,10 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	bool is_pa_on = false, spl_hs = false, spl_hs_reported = false;
 	int ret = 0;
 	int spl_hs_count = 0;
-	int output_mv = 0;
 	int cross_conn;
 	int try = 0;
+#endif
+	int output_mv = 0;
 	int hs_threshold, micbias_mv;
 
 	pr_debug("%s: enter\n", __func__);
@@ -685,6 +690,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	WCD_MBHC_RSC_UNLOCK(mbhc);
 
 	/* Check for cross connection */
+#ifdef WCD_MBHC_SWAP
 	do {
 		cross_conn = wcd_check_cross_conn(mbhc);
 		try++;
@@ -696,6 +702,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 			 __func__, plug_type);
 		goto correct_plug_type;
 	}
+#endif
 	/* Find plug type */
 	output_mv = wcd_measure_adc_continuous(mbhc);
 	plug_type = wcd_mbhc_get_plug_from_adc(mbhc, output_mv);
@@ -722,7 +729,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ADC_EN, 0);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_DETECTION_DONE, 1);
 	}
-
+#ifdef WCD_MBHC_SWAP
 correct_plug_type:
 	/*
 	 * Callback to disable BCS slow insertion detection
@@ -992,6 +999,7 @@ exit:
 
 	mbhc->mbhc_cb->lock_sleep(mbhc, false);
 	pr_debug("%s: leave\n", __func__);
+#endif
 }
 
 static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)

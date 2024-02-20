@@ -1016,6 +1016,10 @@ bool drm_mode_match(const struct drm_display_mode *mode1,
 	if (!mode1 || !mode2)
 		return false;
 
+	/*different refresh rate considerred as different drm mode*/
+	if (mode1->vrefresh != mode2->vrefresh)
+		return false;
+
 	if (match_flags & DRM_MODE_MATCH_TIMINGS &&
 	    !drm_mode_match_timings(mode1, mode2))
 		return false;

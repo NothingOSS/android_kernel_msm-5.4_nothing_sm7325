@@ -29,7 +29,7 @@ struct qrtr_endpoint {
 };
 
 int qrtr_endpoint_register(struct qrtr_endpoint *ep, unsigned int net_id,
-			   bool rt, u32 *svc_arr);
+			   bool rt, u32 *svc_arr, int size);
 
 void qrtr_endpoint_unregister(struct qrtr_endpoint *ep);
 
