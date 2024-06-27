@@ -27,6 +27,7 @@
 #define HDR10_PLUS_VSIF_TYPE_CODE      0x81
 int finger_hbm_flag = 0;
 int hbm_mode_flag = 0;
+bool update_hbm_brightness = false;
 
 /* Autorefresh will occur after FRAME_CNT frames. Large values are unlikely */
 #define AUTOREFRESH_MAX_FRAME_CNT 6
@@ -111,6 +112,10 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		return -EINVAL;
 	}
 
+	if (!update_hbm_brightness) {
+		schedule_work(&c_conn->set_brightness_work);
+		return 0;
+	}
 	brightness = bd->props.brightness;
 
 	if ((bd->props.power != FB_BLANK_UNBLANK) ||
@@ -865,12 +870,16 @@ static int _sde_connector_update_finger_hbm_status(
 			mutex_unlock(&c_conn->lock);
 			c_conn->last_panel_power_mode = SDE_MODE_DPMS_ON;
 		}
+		update_hbm_brightness = true;
 		sde_backlight_device_update_status(c_conn->bl_device);
+		update_hbm_brightness = false;
 		/*wait for VBLANK */
 		sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 	} else {
 		SDE_ERROR("close hbm");
+		update_hbm_brightness = true;
 		sde_backlight_device_update_status(c_conn->bl_device);
+		update_hbm_brightness = false;
 		/*wait for VBLANK */
 		sde_encoder_wait_for_event(c_conn->encoder, MSM_ENC_VBLANK);
 		if ((c_conn->lp_mode == SDE_MODE_DPMS_LP1) ||
@@ -887,6 +896,88 @@ static int _sde_connector_update_finger_hbm_status(
 	return 0;
 }
 
+static void _sde_connector_set_brightness_work(struct work_struct *work)
+{
+	struct sde_connector *c_conn;
+	struct backlight_device *bd;
+	int brightness;
+	struct dsi_display *display;
+	int bl_lvl;
+	struct drm_event event;
+	int rc = 0;
+	struct sde_kms *sde_kms;
+	struct sde_vm_ops *vm_ops;
+
+	c_conn = container_of(work, struct sde_connector, set_brightness_work);
+	if (!c_conn) {
+		SDE_ERROR("not able to get connector object\n");
+		return;
+	}
+	bd = c_conn->bl_device;
+
+	//SDE_ATRACE_BEGIN("_sde_connector_set_brightness_work");
+	sde_kms = _sde_connector_get_kms(&c_conn->base);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
+		return;
+	}
+
+	brightness = bd->props.brightness;
+
+	if ((bd->props.power != FB_BLANK_UNBLANK) ||
+			(bd->props.state & BL_CORE_FBBLANK) ||
+			(bd->props.state & BL_CORE_SUSPENDED))
+		brightness = 0;
+
+	display = (struct dsi_display *) c_conn->display;
+	if (brightness > display->panel->bl_config.bl_max_level)
+		brightness = display->panel->bl_config.bl_max_level;
+	if (brightness > c_conn->thermal_max_brightness)
+		brightness = c_conn->thermal_max_brightness;
+
+	/* map UI brightness into driver backlight level with rounding */
+	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
+			display->panel->bl_config.brightness_max_level);
+
+	/*if enable hbm_mode, set brightness to HBM brightness*/
+	if (finger_hbm_flag || hbm_mode_flag) {
+		SDE_ERROR("update hbm brightness\n");
+		bl_lvl = display->panel->bl_config.bl_hbm_level;
+	}
+
+	if (!bl_lvl && brightness)
+		bl_lvl = 1;
+
+	if (!c_conn->allow_bl_update) {
+		c_conn->unset_bl_level = bl_lvl;
+		return;
+	}
+
+	sde_vm_lock(sde_kms);
+
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
+		SDE_DEBUG("skipping bl update due to HW unavailablity\n");
+		goto done;
+	}
+
+	if (c_conn->ops.set_backlight) {
+		/* skip notifying user space if bl is 0 */
+		if (brightness != 0) {
+			event.type = DRM_EVENT_SYS_BACKLIGHT;
+			event.length = sizeof(u32);
+			msm_mode_object_event_notify(&c_conn->base.base,
+				c_conn->base.dev, &event, (u8 *)&brightness);
+		}
+		rc = c_conn->ops.set_backlight(&c_conn->base,
+				c_conn->display, bl_lvl);
+		c_conn->unset_bl_level = 0;
+	}
+
+done:
+	sde_vm_unlock(sde_kms);
+	//SDE_ATRACE_END("_sde_connector_set_brightness_work");
+}
 
 struct sde_connector_dyn_hdr_metadata *sde_connector_get_dyn_hdr_meta(
 		struct drm_connector *connector)
@@ -3528,6 +3619,7 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 
 	INIT_DELAYED_WORK(&c_conn->status_work,
 			sde_connector_check_status_work);
+	INIT_WORK(&c_conn->set_brightness_work, _sde_connector_set_brightness_work);
 
 	return &c_conn->base;
 
