@@ -13,6 +13,9 @@
 3. NOS 2.5.5
   - No update
 
+4. NOS 2.5.6
+  - Update display driver
+
 # How do I submit patches to Android Common Kernels
 
 1. BEST: Make all of your changes to upstream Linux. If appropriate, backport to the stable releases.
